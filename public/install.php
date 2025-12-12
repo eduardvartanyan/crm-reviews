@@ -1,5 +1,7 @@
 <?php
-require_once (__DIR__.'/crest.php');
+declare(strict_types=1);
+
+use App\CRest;
 
 $result = CRest::installApp();
 if($result['rest_only'] === false):?>

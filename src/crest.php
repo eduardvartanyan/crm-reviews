@@ -1,4 +1,6 @@
 <?php
+namespace App;
+
 require_once (__DIR__.'/settings.php');
 
 /**
@@ -569,45 +571,40 @@ class CRest
     {
         $return = [];
 
-        //check curl lib install
-        if(!function_exists('curl_init'))
-        {
+        if (!function_exists('curl_init')) {
             $return['curl_error'] = 'Need install curl lib.';
         }
 
-        //creat setting file
         file_put_contents(__DIR__ . '/settings_check.json', static::wrapData(['test'=>'data']));
-        if(!file_exists(__DIR__ . '/settings_check.json'))
-        {
+        if (!file_exists(__DIR__ . '/settings_check.json')) {
             $return['setting_creat_error'] = 'Check permission! Recommended: folders: 775, files: 664';
         }
         unlink(__DIR__ . '/settings_check.json');
-        //creat logs folder and files
-        $path = __DIR__ . '/logs/'.date("Y-m-d/H") . '/';
-        if(!mkdir($path, 0775, true) && !file_exists($path))
-        {
-            $return['logs_folder_creat_error'] = 'Check permission! Recommended: folders: 775, files: 664';
+
+        if(defined("C_REST_LOGS_DIR")) {
+            $path = C_REST_LOGS_DIR;
+        } else {
+            $path = __DIR__ . '/logs/';
         }
-        else
-        {
+        $path .= date('Y-m-d/H') . '/';
+
+        if (!mkdir($path, 0775, true) && !file_exists($path)) {
+            $return['logs_folder_creat_error'] = 'Check permission! Recommended: folders: 775, files: 664';
+        } else {
             file_put_contents($path . 'test.txt', var_export(['test'=>'data'], true));
-            if(!file_exists($path . 'test.txt'))
-            {
+            if (!file_exists($path . 'test.txt')) {
                 $return['logs_file_creat_error'] = 'check permission! recommended: folders: 775, files: 664';
             }
             unlink($path . 'test.txt');
         }
 
-        if($print === true)
-        {
-            if(empty($return))
-            {
+        if ($print === true) {
+            if (empty($return)) {
                 $return['success'] = 'Success!';
             }
             echo '<pre>';
             print_r($return);
             echo '</pre>';
-
         }
 
         return $return;
