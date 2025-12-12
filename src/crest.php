@@ -1,8 +1,6 @@
 <?php
 namespace App;
 
-require_once (__DIR__.'/settings.php');
-
 /**
  *  @version 1.36
  *  define:
@@ -412,13 +410,13 @@ class CRest
         if(file_exists(__DIR__ . '/settings.json'))
         {
             $return = static::expandData(file_get_contents(__DIR__ . '/settings.json'));
-            if(defined("C_REST_CLIENT_ID") && !empty(C_REST_CLIENT_ID))
+            if(isset($_ENV['C_REST_CLIENT_ID']) && !empty($_ENV['C_REST_CLIENT_ID']))
             {
-                $return['C_REST_CLIENT_ID'] = C_REST_CLIENT_ID;
+                $return['C_REST_CLIENT_ID'] = $_ENV['C_REST_CLIENT_ID'];
             }
-            if(defined("C_REST_CLIENT_SECRET") && !empty(C_REST_CLIENT_SECRET))
+            if(isset($_ENV['C_REST_CLIENT_SECRET']) && !empty($_ENV['C_REST_CLIENT_SECRET']))
             {
-                $return['C_REST_CLIENT_SECRET'] = C_REST_CLIENT_SECRET;
+                $return['C_REST_CLIENT_SECRET'] = $_ENV['C_REST_CLIENT_SECRET'];
             }
         }
         return $return;
@@ -526,12 +524,9 @@ class CRest
         $return = false;
         if(!defined("C_REST_BLOCK_LOG") || C_REST_BLOCK_LOG !== true)
         {
-            if(defined("C_REST_LOGS_DIR"))
-            {
-                $path = C_REST_LOGS_DIR;
-            }
-            else
-            {
+            if (isset($_ENV['C_REST_LOGS_DIR'])) {
+                $path = $_ENV['C_REST_LOGS_DIR'];
+            } else {
                 $path = __DIR__ . '/logs/';
             }
             $path .= date("Y-m-d/H") . '/';
@@ -581,8 +576,8 @@ class CRest
         }
         unlink(__DIR__ . '/settings_check.json');
 
-        if(defined("C_REST_LOGS_DIR")) {
-            $path = C_REST_LOGS_DIR;
+        if(isset($_ENV['C_REST_LOGS_DIR'])) {
+            $path = $_ENV['C_REST_LOGS_DIR'];
         } else {
             $path = __DIR__ . '/logs/';
         }

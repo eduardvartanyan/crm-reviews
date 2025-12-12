@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 use App\CRest;
 
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../src/bootstrap.php';
+
 $result = CRest::installApp();
 if($result['rest_only'] === false):?>
     <head>
@@ -14,7 +17,7 @@ if($result['rest_only'] === false):?>
                         'bizproc.activity.add',
                         {
                             'CODE': 'getReviewLink',
-                            'HANDLER': 'https://crm-reviews.ru/getreviewlink.php',
+                            'HANDLER': 'https://crm-reviews.ru/activities/getreviewlink',
                             'AUTH_USER_ID': 96,
                             'USE_SUBSCRIPTION': 'Y',
                             'NAME': {
