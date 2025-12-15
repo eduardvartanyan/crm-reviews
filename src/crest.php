@@ -525,7 +525,7 @@ class CRest
         if(!defined("C_REST_BLOCK_LOG") || C_REST_BLOCK_LOG !== true)
         {
             if (isset($_ENV['C_REST_LOGS_DIR'])) {
-                $path = $_ENV['C_REST_LOGS_DIR'];
+                $path = $_ENV['C_REST_LOGS_DIR'] . '/crest/';
             } else {
                 $path = __DIR__ . '/logs/';
             }
@@ -577,7 +577,7 @@ class CRest
         unlink(__DIR__ . '/settings_check.json');
 
         if(isset($_ENV['C_REST_LOGS_DIR'])) {
-            $path = $_ENV['C_REST_LOGS_DIR'];
+            $path = $_ENV['C_REST_LOGS_DIR'] . '/crest/';
         } else {
             $path = __DIR__ . '/logs/';
         }
