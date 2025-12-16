@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 use App\Container;
 use App\CRest;
+use App\Logger;
 use App\Services\B24Service;
+use App\Services\LinkService;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/bootstrap.php';
@@ -22,19 +24,38 @@ try {
             }
             break;
 
-        case '/activities/getreviewlink':
+        case '/activities/getreviewlinks':
             if (
                 $method == 'POST'
                 && isset($_POST['document_id']) && is_array($_POST['document_id']) && count($_POST['document_id']) >= 3
             ) {
+                $dealId = (int) str_replace('DEAL_', '', $_POST['document_id'][2]);
 
-                echo 'Get review link';
+                $linkService = $container->get(LinkService::class);
+                $b24Service  = $container->get(B24Service::class);
+
+                $dealReviewLinks = $linkService->getDealReviewLinks($dealId);
+
+                $url = $_REQUEST['auth']['client_endpoint'] . 'bizproc.event.send.json?' . http_build_query([
+                    'auth' => $_REQUEST['auth']['access_token'],
+                    'event_token' => $_REQUEST['event_token'],
+                    'return_values' => [
+                        'link' => $dealReviewLinks,
+                    ]
+                ]);
+                $result = file_get_contents($url);
+
+                Logger::info('/activities/getreviewlinks', [
+                    'request'  => $_REQUEST,
+                    'response' => $url,
+                    'result'   => $result,
+                ]);
             }
             break;
 
         case '/test':
-            $b24service = $container->get(B24Service::class);
-            $b24service->getDealContactIds(172176);
+            $b24Service = $container->get(B24Service::class);
+            $b24Service->getDealContactIds(172176);
             break;
     }
 } catch (Throwable $e) {

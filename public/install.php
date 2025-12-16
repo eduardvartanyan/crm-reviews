@@ -17,8 +17,8 @@ if($result['rest_only'] === false):?>
                         'bizproc.activity.add',
                         {
                             'CODE': 'getReviewLink',
-                            'HANDLER': 'https://crm-reviews.ru/activities/getreviewlink',
-                            'AUTH_USER_ID': 96,
+                            'HANDLER': 'https://crm-reviews.ru/activities/getreviewlinks',
+                            'AUTH_USER_ID': 134,
                             'USE_SUBSCRIPTION': 'Y',
                             'NAME': {
                                 'ru': 'Ссылка на отзыв'
