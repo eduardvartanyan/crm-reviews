@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use App\CRest;
-use App\Logger;
+use App\Support\CRest;
+use App\Support\Logger;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/../public/bootstrap.php';
 
 $result = CRest::installApp();
 

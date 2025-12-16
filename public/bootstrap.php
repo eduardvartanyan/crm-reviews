@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-use App\Container;
-use App\Database\Database;
 use App\Services\B24Service;
 use App\Services\LinkService;
+use App\Support\Container;
+use App\Support\Database;
 use Bitrix24\SDK\Services\ServiceBuilder;
 use Bitrix24\SDK\Services\ServiceBuilderFactory;
 use Dotenv\Dotenv;

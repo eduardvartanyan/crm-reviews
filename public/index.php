@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-use App\Container;
-use App\CRest;
-use App\Logger;
 use App\Services\B24Service;
 use App\Services\LinkService;
+use App\Support\Container;
+use App\Support\CRest;
+use App\Support\Logger;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/../public/bootstrap.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';

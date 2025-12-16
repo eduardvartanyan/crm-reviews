@@ -1,5 +1,11 @@
 <?php
-namespace App;
+namespace App\Support;
+
+use App\Exception;
+use const App\C_REST_BLOCK_LOG;
+use const App\C_REST_IGNORE_SSL;
+use const App\C_REST_LOG_TYPE_DUMP;
+use const App\C_REST_WEB_HOOK_URL;
 
 /**
  *  @version 1.36

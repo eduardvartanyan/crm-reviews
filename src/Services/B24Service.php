@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Logger;
+use App\Support\Logger;
 use Bitrix24\SDK\Services\ServiceBuilder;
 use Throwable;
 

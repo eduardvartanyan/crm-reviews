@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use App\CRest;
+use App\Support\CRest;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../src/bootstrap.php';
+require_once __DIR__ . '/../public/bootstrap.php';
 
 CRest::checkServer();
