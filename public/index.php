@@ -53,6 +53,8 @@ try {
             }
             break;
 
+        // https://crm-reviews.ru/r/forsite/AGCLKKjyprFI09iRISNaY8GbG3nLkV1hoNiVCjMYOMMMgi6uds_h-FUsNq8/
+
         case '/test':
             $b24Service = $container->get(B24Service::class);
             $b24Service->getDealContactIds(172176);
