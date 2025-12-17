@@ -25,4 +25,4 @@ $container->set(LinkService::class,        fn() => new LinkService(
 ));
 $container->set(ClientRepository::class,   fn() => new ClientRepository());
 $container->set(SettingsController::class, fn() => new SettingsController($container->get(ClientRepository::class)));
-$container->set(ReviewController::class,   fn() => new ReviewController());
+$container->set(ReviewController::class,   fn() => new ReviewController($container->get(LinkService::class)));

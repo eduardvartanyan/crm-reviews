@@ -29,7 +29,7 @@ class ClientRepository
             ");
             $stmt->execute([
                 ':domain'  => $values['domain'],
-                ':code'   => $values['code'],
+                ':code'    => $values['code'],
                 ':title'   => $values['code'],
                 ':app_sid' => $values['app_sid'],
             ]);

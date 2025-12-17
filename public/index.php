@@ -19,15 +19,11 @@ try {
 
     // https://crm-reviews.ru/r/forsait/dtglOIcwpapZYDHJMZ9uQH4lZ7k/
     if (
-        in_array($method, ['GET', 'POST'])
+        $method === 'GET'
         && preg_match('#^/r/([^/]+)/([^/]+)/?$#', $uri, $matches)
     ) {
-
-        $code    = $matches[1];
-        $encoded = $matches[2];
-
         $controller = $container->get(ReviewController::class);
-        $controller->showForm($code, $encoded, $container);
+        $controller->showForm($matches[1], $matches[2]);
 
         exit;
     }
@@ -73,6 +69,13 @@ try {
             if ($method === 'POST') {
                 $controller = $container->get(SettingsController::class);
                 $controller->update();
+            }
+            break;
+
+        case '/review/submit':
+            if ($method === 'POST') {
+                $controller = $container->get(ReviewController::class);
+                $controller->submit();
             }
             break;
 
