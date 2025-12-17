@@ -59,9 +59,16 @@ $client = $clientRepository->getByCode($code);
 
         .title {
             font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-weight: 400;
+            margin-bottom: 20px;
             text-align: center;
+        }
+
+        .title .company-title {
+            font-size: 24px;
+            font-weight: 600;
+            background: #fbffaa;
+            padding: 0 5px 5px;
         }
 
         .subtitle {
@@ -94,9 +101,10 @@ $client = $clientRepository->getByCode($code);
             transform: scale(1.15);
         }
 
-        .rating input:checked ~ label,
         .rating label:hover,
-        .rating label:hover ~ label {
+        .rating label:has(~ label:hover),
+        .rating input:checked + label,
+        .rating label:has(~ input:checked) {
             color: #ffd66e;
         }
 
@@ -159,32 +167,28 @@ $client = $clientRepository->getByCode($code);
 <div class="container">
     <div class="card">
         <div class="title">
-            Оставьте отзыв о компании<br><?= htmlspecialchars($client['title']) ?>
-        </div>
-
-        <div class="subtitle">
-            Ваше мнение поможет нам стать лучше
+            Оставьте отзыв о компании<br><span class="company-title"><?= htmlspecialchars($client['title']) ?></span>
         </div>
 
         <form method="post" action="/reviews/submit">
-            <input type="hidden" name="client_id" value="<?= (int)$client['id'] ?>">
+            <input type="hidden" name="code" value="<?= htmlspecialchars($code) ?>">
             <input type="hidden" name="encoded" value="<?= htmlspecialchars($encoded) ?>">
 
             <div class="rating">
-                <input type="radio" id="star5" name="rating" value="5" required>
-                <label for="star5">★</label>
-
-                <input type="radio" id="star4" name="rating" value="4">
-                <label for="star4">★</label>
-
-                <input type="radio" id="star3" name="rating" value="3">
-                <label for="star3">★</label>
+                <input type="radio" id="star1" name="rating" value="1" required>
+                <label for="star1">★</label>
 
                 <input type="radio" id="star2" name="rating" value="2">
                 <label for="star2">★</label>
 
-                <input type="radio" id="star1" name="rating" value="1">
-                <label for="star1">★</label>
+                <input type="radio" id="star3" name="rating" value="3">
+                <label for="star3">★</label>
+
+                <input type="radio" id="star4" name="rating" value="4">
+                <label for="star4">★</label>
+
+                <input type="radio" id="star5" name="rating" value="5">
+                <label for="star5">★</label>
             </div>
 
             <div class="field">
@@ -199,10 +203,6 @@ $client = $clientRepository->getByCode($code);
                 Отправить отзыв
             </button>
         </form>
-
-        <div class="footer-note">
-            Отзыв анонимен и займёт не более минуты
-        </div>
     </div>
 </div>
 
