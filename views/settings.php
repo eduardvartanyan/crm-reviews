@@ -83,7 +83,7 @@ $client = $clientRepository->getByDomain($_REQUEST['DOMAIN']);
 
 <div class="b24-settings-card">
     <div class="b24-settings-title">
-        Настройки приложения
+        Настройки формы отзыва
     </div>
 
     <form id="settings-form">
@@ -91,7 +91,7 @@ $client = $clientRepository->getByDomain($_REQUEST['DOMAIN']);
 
         <div class="b24-form-group">
             <label for="title" class="b24-form-label">
-                Название компании в форме
+                Название компании в форме:
             </label>
             <input
                     id="title"
@@ -105,7 +105,7 @@ $client = $clientRepository->getByDomain($_REQUEST['DOMAIN']);
 
         <div class="b24-form-group">
             <label for="code" class="b24-form-label">
-                Идентификатор компании для ссылок
+                Код компании в ссылке на форму отзыва:
             </label>
             <input
                     id="code"
