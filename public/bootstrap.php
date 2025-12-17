@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use App\Controllers\SettingController;
+use App\Controllers\SettingsController;
 use App\Repositories\ClientRepository;
 use App\Services\B24Service;
 use App\Services\LinkService;
@@ -23,4 +23,4 @@ $container->set(LinkService::class,       fn() => new LinkService(
     $_ENV['VRT_FORM_URL']
 ));
 $container->set(ClientRepository::class,  fn() => new ClientRepository());
-$container->set(SettingController::class, fn() => new SettingController());
+$container->set(SettingsController::class, fn() => new SettingsController($container->get(ClientRepository::class)));

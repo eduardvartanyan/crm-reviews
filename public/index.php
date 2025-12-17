@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use App\Controllers\SettingController;
+use App\Controllers\SettingsController;
 use App\Repositories\ClientRepository;
 use App\Services\B24Service;
 use App\Services\LinkService;
@@ -20,7 +20,7 @@ try {
     switch ($uri) {
         case '/index.php':
             if ($method === 'POST') {
-                $controller = $container->get(SettingController::class);
+                $controller = $container->get(SettingsController::class);
                 $controller->showForm();
             }
             break;
@@ -54,16 +54,17 @@ try {
             }
             break;
 
+        case '/app-settings/update':
+            if ($method === 'POST') {
+                $controller = $container->get(SettingsController::class);
+                $controller->update();
+            }
+            break;
+
         // https://crm-reviews.ru/r/forsite/AGCLKKjyprFI09iRISNaY8GbG3nLkV1hoNiVCjMYOMMMgi6uds_h-FUsNq8/
 
         case '/test':
-            $clientRepository = $container->get(ClientRepository::class);
-            $clientId = $clientRepository->create([
-                'domain'  => 'fs911.bitrix24.ru',
-                'title'   => 'fs911',
-                'app_sid' => '9c450b47dcbed52fc541d68617879576',
-            ]);
-            echo $clientId;
+            phpinfo();
             break;
     }
 } catch (Throwable $e) {

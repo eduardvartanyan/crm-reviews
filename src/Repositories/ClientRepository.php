@@ -23,9 +23,10 @@ class ClientRepository
     public function create(array $values): int
     {
         try {
-            $stmt = $this->pdo->prepare(
-                "INSERT INTO clients (domain, title, app_sid) VALUES (:domain, :title, :app_sid);"
-            );
+            $stmt = $this->pdo->prepare("
+                INSERT INTO clients (domain, title, app_sid) 
+                VALUES (:domain, :title, :app_sid);
+            ");
             $stmt->execute([
                 ':domain'  => $values['domain'],
                 ':title'   => $values['title'],
@@ -45,9 +46,11 @@ class ClientRepository
         if ($domain === '') return null;
 
         try {
-            $stmt = $this->pdo->prepare(
-                "SELECT * FROM clients WHERE domain = :domain;"
-            );
+            $stmt = $this->pdo->prepare("
+                SELECT * 
+                FROM clients 
+                WHERE domain = :domain;
+            ");
             $stmt->execute([
                 ':domain' => $domain,
             ]);
@@ -62,5 +65,19 @@ class ClientRepository
                 '[ClientRepository->getByDomain] Error selecting from clients -> ' . $e->getMessage()
             );
         }
+    }
+
+    public function updateTitleByDomain(string $domain, string $title): void
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE clients
+            SET title = :title
+            WHERE domain = :domain
+        ");
+
+        $stmt->execute([
+            ':title'  => $title,
+            ':domain' => $domain,
+        ]);
     }
 }
