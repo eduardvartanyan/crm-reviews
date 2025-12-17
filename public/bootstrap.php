@@ -4,6 +4,7 @@ declare(strict_types=1);
 use App\Controllers\ReviewController;
 use App\Controllers\SettingsController;
 use App\Repositories\ClientRepository;
+use App\Repositories\ReviewRepository;
 use App\Services\B24Service;
 use App\Services\LinkService;
 use App\Support\Container;
@@ -24,5 +25,10 @@ $container->set(LinkService::class,        fn() => new LinkService(
     $_ENV['VRT_FORM_URL']
 ));
 $container->set(ClientRepository::class,   fn() => new ClientRepository());
+$container->set(ReviewRepository::class,   fn() => new ReviewRepository());
 $container->set(SettingsController::class, fn() => new SettingsController($container->get(ClientRepository::class)));
-$container->set(ReviewController::class,   fn() => new ReviewController($container->get(LinkService::class)));
+$container->set(ReviewController::class,   fn() => new ReviewController(
+    $container->get(LinkService::class),
+    $container->get(ReviewRepository::class),
+    $container->get(ClientRepository::class)
+));
