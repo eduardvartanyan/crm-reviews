@@ -7,25 +7,120 @@ $clientRepository = new ClientRepository();
 $client = $clientRepository->getByDomain($_REQUEST['DOMAIN']);
 ?>
 
-<form id="settings-form">
-    <input type="hidden" name="DOMAIN" value="<?= htmlspecialchars($_REQUEST['DOMAIN']) ?>" />
+<style>
+    .b24-settings-card {
+        max-width: 520px;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 20px 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
 
-    <label for="title">Идентификатор компании для ссылок:</label>
-    <input id="title" type="text" name="title" value="<?= htmlspecialchars($client['title'] ?? '') ?>" />
+    .b24-settings-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: #333;
+    }
 
-    <button type="submit">Сохранить</button>
+    .b24-form-group {
+        margin-bottom: 16px;
+    }
 
-    <span id="save-status" style="display:none; margin-left:10px; color:green;">
-        Сохранено
-    </span>
-</form>
+    .b24-form-label {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 6px;
+        color: #555;
+    }
+
+    .b24-input {
+        width: 100%;
+        height: 38px;
+        padding: 0 10px;
+        border: 1px solid #cfd4d9;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .b24-input:focus {
+        outline: none;
+        border-color: #2fc6f6;
+        box-shadow: 0 0 0 2px rgba(47, 198, 246, 0.2);
+    }
+
+    .b24-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .b24-btn {
+        background: #2fc6f6;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+    .b24-btn:hover {
+        background: #25b5e4;
+    }
+
+    .b24-save-status {
+        font-size: 13px;
+        color: #4bb34b;
+        display: none;
+    }
+</style>
+
+<div class="b24-settings-card">
+    <div class="b24-settings-title">
+        Настройки приложения
+    </div>
+
+    <form id="settings-form">
+        <input type="hidden" name="DOMAIN" value="<?= htmlspecialchars($_REQUEST['DOMAIN']) ?>" />
+
+        <div class="b24-form-group">
+            <label for="title" class="b24-form-label">
+                Идентификатор компании для ссылок
+            </label>
+            <input
+                    id="title"
+                    class="b24-input"
+                    type="text"
+                    name="title"
+                    placeholder="например: my-company"
+                    value="<?= htmlspecialchars($client['title'] ?? '') ?>"
+            />
+        </div>
+
+        <div class="b24-actions">
+            <button type="submit" class="b24-btn">
+                Сохранить
+            </button>
+
+            <span id="save-status" class="b24-save-status">
+                Сохранено
+            </span>
+        </div>
+    </form>
+</div>
 
 <script>
     document.getElementById('settings-form').addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const form = e.target;
-        const formData = new FormData(form);
+        const formData = new FormData(e.target);
+        const status = document.getElementById('save-status');
 
         try {
             const response = await fetch('/app-settings/update', {
@@ -36,10 +131,7 @@ $client = $clientRepository->getByDomain($_REQUEST['DOMAIN']);
             const result = await response.json();
 
             if (result.status === 'OK') {
-                const status = document.getElementById('save-status');
-
                 status.style.display = 'inline';
-
 
                 setTimeout(() => {
                     status.style.display = 'none';
