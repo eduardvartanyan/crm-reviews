@@ -24,7 +24,7 @@ if ($result['install'] && isset($_REQUEST['DOMAIN']) && isset($_REQUEST['APP_SID
     $array = explode('.', $_REQUEST['DOMAIN']);
 
     try {
-        $client = $clientRepository->findByDomain($_REQUEST['DOMAIN']);
+        $client = $clientRepository->getByDomain($_REQUEST['DOMAIN']);
 
         if ($client) {
             $clientId = $client['id'];

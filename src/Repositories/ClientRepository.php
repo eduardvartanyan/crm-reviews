@@ -40,7 +40,7 @@ class ClientRepository
         }
     }
 
-    public function findByDomain(string $domain): ?array
+    public function getByDomain(string $domain): ?array
     {
         if ($domain === '') return null;
 
@@ -59,7 +59,7 @@ class ClientRepository
             return $result;
         } catch (PDOException $e) {
             throw new RuntimeException(
-                '[ClientRepository->findByDomain] Error selecting from clients -> ' . $e->getMessage()
+                '[ClientRepository->getByDomain] Error selecting from clients -> ' . $e->getMessage()
             );
         }
     }

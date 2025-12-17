@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Controllers\SettingController;
 use App\Repositories\ClientRepository;
 use App\Services\B24Service;
 use App\Services\LinkService;
@@ -13,11 +14,13 @@ $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->load();
 
 $container = new Container();
-$container->set(B24Service::class,       fn() => new B24Service($container->get(ServiceBuilder::class)));
-$container->set(ServiceBuilder::class,   fn() => ServiceBuilderFactory::createServiceBuilderFromWebhook($_ENV['B24_WEBHOOK_CODE']));
-$container->set(LinkService::class,      fn() => new LinkService(
+
+$container->set(B24Service::class,        fn() => new B24Service($container->get(ServiceBuilder::class)));
+$container->set(ServiceBuilder::class,    fn() => ServiceBuilderFactory::createServiceBuilderFromWebhook($_ENV['B24_WEBHOOK_CODE']));
+$container->set(LinkService::class,       fn() => new LinkService(
     $container->get(B24Service::class),
     $container->get(ClientRepository::class),
     $_ENV['VRT_FORM_URL']
 ));
-$container->set(ClientRepository::class, fn() => new ClientRepository());
+$container->set(ClientRepository::class,  fn() => new ClientRepository());
+$container->set(SettingController::class, fn() => new SettingController());

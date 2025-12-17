@@ -17,7 +17,7 @@ readonly class LinkService
     public function getDealReviewLinks(int $dealId, string $domain): ?array
     {
         $contactIds = $this->b24Service->getDealContactIds($dealId);
-        $client = $this->clientRepository->findByDomain($domain);
+        $client = $this->clientRepository->getByDomain($domain);
 
         $link = $this->formUrl . $client['title'] . '/';
 

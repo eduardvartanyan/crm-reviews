@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
+use App\Controllers\SettingController;
 use App\Repositories\ClientRepository;
 use App\Services\B24Service;
 use App\Services\LinkService;
 use App\Support\Container;
-use App\Support\CRest;
 use App\Support\Logger;
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -19,9 +19,9 @@ try {
 
     switch ($uri) {
         case '/index.php':
-            if ($method == 'POST') {
-                $result = CRest::call('profile');
-                echo '<pre>'; print_r($result); echo '</pre>';
+            if ($method === 'POST') {
+                $controller = $container->get(SettingController::class);
+                $controller->showForm();
             }
             break;
 
