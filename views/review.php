@@ -2,9 +2,50 @@
 declare(strict_types=1);
 
 use App\Repositories\ClientRepository;
+use App\Support\Logger;
+use Throwable;
 
 /** @var string $code
   * @var string $encoded */
+
+$isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+$ratingValue = null;
+$reviewValue = '';
+$isSubmitted = false;
+$errors = [];
+
+if ($isPost) {
+    $code    = $_POST['code'] ?? $code;
+    $encoded = $_POST['encoded'] ?? $encoded;
+
+    $ratingValue = isset($_POST['rating']) ? (int) $_POST['rating'] : null;
+    $reviewValue = trim((string) ($_POST['review'] ?? ''));
+
+    if ($ratingValue === null || $ratingValue < 1 || $ratingValue > 5) {
+        $errors[] = 'Выберите оценку от 1 до 5.';
+    }
+
+    if ($reviewValue === '') {
+        $errors[] = 'Расскажите, что вам понравилось или что можно улучшить.';
+    }
+
+    if (!$errors) {
+        $isSubmitted = true;
+
+        try {
+            Logger::info('Review submitted', [
+                'code'    => $code,
+                'encoded' => $encoded,
+                'rating'  => $ratingValue,
+                'review'  => $reviewValue,
+                'ip'      => $_SERVER['REMOTE_ADDR'] ?? null,
+                'agent'   => $_SERVER['HTTP_USER_AGENT'] ?? null,
+            ]);
+        } catch (Throwable $e) {
+            error_log('Review log failed: ' . $e->getMessage());
+        }
+    }
+}
 
 $clientRepository = new ClientRepository();
 $client = $clientRepository->getByCode($code);
@@ -14,7 +55,7 @@ $client = $clientRepository->getByCode($code);
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Отзыв о компании <?= htmlspecialchars($client['title']) ?></title>
+    <title>Отзыв о компании "<?= htmlspecialchars($client['title']) ?>"</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
@@ -76,6 +117,25 @@ $client = $clientRepository->getByCode($code);
             color: var(--muted);
             text-align: center;
             margin-bottom: 24px;
+        }
+        
+        .alert {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            background: #fff4e5;
+            border: 1px solid #ffd8a8;
+            border-radius: 12px;
+            color: #b57700;
+            font-size: 14px;
+        }
+
+        .success {
+            text-align: center;
+            padding: 18px 12px 8px;
+        }
+
+        .success .subtitle {
+            margin-bottom: 0;
         }
 
         /* ====== Rating ====== */
@@ -166,43 +226,56 @@ $client = $clientRepository->getByCode($code);
 
 <div class="container">
     <div class="card">
-        <div class="title">
-            Оставьте отзыв о компании<br><span class="company-title"><?= htmlspecialchars($client['title']) ?></span>
-        </div>
+        <?php if ($isSubmitted): ?>
+            <div class="success">
+                <div class="title">Спасибо за ваш отзыв!</div>
+                <div class="subtitle">Мы ценим вашу обратную связь и используем её, чтобы становиться лучше.</div>
+            </div>
+        <?php else: ?>
+            <?php if ($errors): ?>
+                <div class="alert">
+                    <?= htmlspecialchars(implode(' ', $errors)) ?>
+                </div>
+            <?php endif; ?>
 
-        <form method="post" action="/reviews/submit">
-            <input type="hidden" name="code" value="<?= htmlspecialchars($code) ?>">
-            <input type="hidden" name="encoded" value="<?= htmlspecialchars($encoded) ?>">
-
-            <div class="rating">
-                <input type="radio" id="star1" name="rating" value="1" required>
-                <label for="star1">★</label>
-
-                <input type="radio" id="star2" name="rating" value="2">
-                <label for="star2">★</label>
-
-                <input type="radio" id="star3" name="rating" value="3">
-                <label for="star3">★</label>
-
-                <input type="radio" id="star4" name="rating" value="4">
-                <label for="star4">★</label>
-
-                <input type="radio" id="star5" name="rating" value="5">
-                <label for="star5">★</label>
+            <div class="title">
+                Оставьте отзыв о компании<br><span class="company-title"><?= htmlspecialchars($client['title']) ?></span>
             </div>
 
-            <div class="field">
-                <textarea
-                    name="review"
-                    placeholder="Расскажите, что вам понравилось или что можно улучшить"
-                    required
-                ></textarea>
-            </div>
+            <form method="post" action="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
+                <input type="hidden" name="code" value="<?= htmlspecialchars($code) ?>">
+                <input type="hidden" name="encoded" value="<?= htmlspecialchars($encoded) ?>">
 
-            <button class="submit" type="submit">
-                Отправить отзыв
-            </button>
-        </form>
+                <div class="rating">
+                    <input type="radio" id="star1" name="rating" value="1" required <?= $ratingValue === 1 ? 'checked' : '' ?>>
+                    <label for="star1">★</label>
+
+                    <input type="radio" id="star2" name="rating" value="2" <?= $ratingValue === 2 ? 'checked' : '' ?>>
+                    <label for="star2">★</label>
+
+                    <input type="radio" id="star3" name="rating" value="3" <?= $ratingValue === 3 ? 'checked' : '' ?>>
+                    <label for="star3">★</label>
+
+                    <input type="radio" id="star4" name="rating" value="4" <?= $ratingValue === 4 ? 'checked' : '' ?>>
+                    <label for="star4">★</label>
+
+                    <input type="radio" id="star5" name="rating" value="5" <?= $ratingValue === 5 ? 'checked' : '' ?>>
+                    <label for="star5">★</label>
+                </div>
+
+                <div class="field">
+                    <textarea
+                        name="review"
+                        placeholder="Расскажите, что вам понравилось или что можно улучшить"
+                        required
+                    ><?= htmlspecialchars($reviewValue) ?></textarea>
+                </div>
+
+                <button class="submit" type="submit">
+                    Отправить отзыв
+                </button>
+            </form>
+        <?php endif; ?>
     </div>
 </div>
 

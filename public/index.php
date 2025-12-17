@@ -18,7 +18,10 @@ try {
     /** @var Container $container */
 
     // https://crm-reviews.ru/r/forsait/dtglOIcwpapZYDHJMZ9uQH4lZ7k/
-    if ($method === 'GET' && preg_match('#^/r/([^/]+)/([^/]+)/?$#', $uri, $matches)) {
+    if (
+        in_array($method, ['GET', 'POST'])
+        && preg_match('#^/r/([^/]+)/([^/]+)/?$#', $uri, $matches)
+    ) {
 
         $code    = $matches[1];
         $encoded = $matches[2];
