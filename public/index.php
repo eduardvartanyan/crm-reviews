@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Controllers\ReviewController;
 use App\Controllers\SettingsController;
 use App\Services\B24Service;
 use App\Services\LinkService;
@@ -15,6 +16,18 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 try {
     /** @var Container $container */
+
+    // https://crm-reviews.ru/r/forsait/dtglOIcwpapZYDHJMZ9uQH4lZ7k/
+    if ($method === 'GET' && preg_match('#^/r/([^/]+)/([^/]+)/?$#', $uri, $matches)) {
+
+        $code    = $matches[1];
+        $encoded = $matches[2];
+
+        $controller = $container->get(ReviewController::class);
+        $controller->showForm($code, $encoded);
+
+        exit;
+    }
 
     switch ($uri) {
         case '/index.php':
@@ -59,8 +72,6 @@ try {
                 $controller->update();
             }
             break;
-
-        // https://crm-reviews.ru/r/forsait/dtglOIcwpapZYDHJMZ9uQH4lZ7k/
 
         case '/test':
             phpinfo();

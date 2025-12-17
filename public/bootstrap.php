@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Controllers\ReviewController;
 use App\Controllers\SettingsController;
 use App\Repositories\ClientRepository;
 use App\Services\B24Service;
@@ -24,3 +25,4 @@ $container->set(LinkService::class,       fn() => new LinkService(
 ));
 $container->set(ClientRepository::class,  fn() => new ClientRepository());
 $container->set(SettingsController::class, fn() => new SettingsController($container->get(ClientRepository::class)));
+$container->set(ReviewController::class, fn() => new ReviewController());

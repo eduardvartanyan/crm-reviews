@@ -68,6 +68,32 @@ class ClientRepository
         }
     }
 
+    public function getByCode(string $code): ?array
+    {
+        if ($code === '') return null;
+
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT * 
+                FROM clients 
+                WHERE code = :code;
+            ");
+            $stmt->execute([
+                ':code' => $code,
+            ]);
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$result) return null;
+
+            return $result;
+        } catch (PDOException $e) {
+            throw new RuntimeException(
+                '[ClientRepository->getByCode] Error selecting from clients -> ' . $e->getMessage()
+            );
+        }
+    }
+
     public function updateCodeByDomain(string $domain, string $code): void
     {
         $stmt = $this->pdo->prepare("
