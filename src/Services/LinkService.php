@@ -48,7 +48,7 @@ readonly class LinkService
         return rtrim(strtr(base64_encode($final), '+/', '-_'), '=');
     }
 
-    private function decodeParams(string $encoded): array
+    public function decodeParams(string $encoded): array
     {
         $key = $_ENV['VRT_ENCODE_KEY'];
 

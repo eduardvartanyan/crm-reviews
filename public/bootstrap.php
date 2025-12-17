@@ -16,13 +16,13 @@ $dotenv->load();
 
 $container = new Container();
 
-$container->set(B24Service::class,        fn() => new B24Service($container->get(ServiceBuilder::class)));
-$container->set(ServiceBuilder::class,    fn() => ServiceBuilderFactory::createServiceBuilderFromWebhook($_ENV['B24_WEBHOOK_CODE']));
-$container->set(LinkService::class,       fn() => new LinkService(
+$container->set(B24Service::class,         fn() => new B24Service($container->get(ServiceBuilder::class)));
+$container->set(ServiceBuilder::class,     fn() => ServiceBuilderFactory::createServiceBuilderFromWebhook($_ENV['B24_WEBHOOK_CODE']));
+$container->set(LinkService::class,        fn() => new LinkService(
     $container->get(B24Service::class),
     $container->get(ClientRepository::class),
     $_ENV['VRT_FORM_URL']
 ));
-$container->set(ClientRepository::class,  fn() => new ClientRepository());
+$container->set(ClientRepository::class,   fn() => new ClientRepository());
 $container->set(SettingsController::class, fn() => new SettingsController($container->get(ClientRepository::class)));
-$container->set(ReviewController::class, fn() => new ReviewController());
+$container->set(ReviewController::class,   fn() => new ReviewController());

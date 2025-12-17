@@ -2,11 +2,13 @@
 declare(strict_types=1);
 
 use App\Repositories\ClientRepository;
+use App\Services\LinkService;
 use App\Support\Logger;
 use Throwable;
 
 /** @var string $code
-  * @var string $encoded */
+  * @var string $encoded
+  * @var Container $container */
 
 $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
 $ratingValue = null;
@@ -15,11 +17,11 @@ $isSubmitted = false;
 $errors = [];
 
 if ($isPost) {
-    $code    = $_POST['code'] ?? $code;
-    $encoded = $_POST['encoded'] ?? $encoded;
+    $code    = $_REQUEST['code'] ?? $code;
+    $encoded = $_REQUEST['encoded'] ?? $encoded;
 
-    $ratingValue = isset($_POST['rating']) ? (int) $_POST['rating'] : null;
-    $reviewValue = trim((string) ($_POST['review'] ?? ''));
+    $ratingValue = isset($_REQUEST['rating']) ? (int) $_REQUEST['rating'] : null;
+    $reviewValue = trim((string) ($_REQUEST['review'] ?? ''));
 
     if ($ratingValue === null || $ratingValue < 1 || $ratingValue > 5) {
         $errors[] = 'Выберите оценку от 1 до 5.';
@@ -32,14 +34,19 @@ if ($isPost) {
     if (!$errors) {
         $isSubmitted = true;
 
+        $linkService = $container->get(LinkService::class);
+
+        $decoded = $linkService->decodeParams($encoded);
+
         try {
             Logger::info('Review submitted', [
-                'code'    => $code,
-                'encoded' => $encoded,
-                'rating'  => $ratingValue,
-                'review'  => $reviewValue,
-                'ip'      => $_SERVER['REMOTE_ADDR'] ?? null,
-                'agent'   => $_SERVER['HTTP_USER_AGENT'] ?? null,
+                'clientCode' => $code,
+                'contactId'  => $decoded['contactId'],
+                'dealId'     => $decoded['dealId'],
+                'rating'     => $ratingValue,
+                'review'     => $reviewValue,
+                'ip'         => $_SERVER['REMOTE_ADDR'] ?? null,
+                'agent'      => $_SERVER['HTTP_USER_AGENT'] ?? null,
             ]);
         } catch (Throwable $e) {
             error_log('Review log failed: ' . $e->getMessage());

@@ -27,7 +27,7 @@ try {
         $encoded = $matches[2];
 
         $controller = $container->get(ReviewController::class);
-        $controller->showForm($code, $encoded);
+        $controller->showForm($code, $encoded, $container);
 
         exit;
     }
