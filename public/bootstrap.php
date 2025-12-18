@@ -30,5 +30,6 @@ $container->set(SettingsController::class, fn() => new SettingsController($conta
 $container->set(ReviewController::class,   fn() => new ReviewController(
     $container->get(LinkService::class),
     $container->get(ReviewRepository::class),
-    $container->get(ClientRepository::class)
+    $container->get(ClientRepository::class),
+    $container->get(B24Service::class)
 ));
