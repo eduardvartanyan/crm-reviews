@@ -7,9 +7,9 @@ use App\Support\Logger;
 use Bitrix24\SDK\Services\ServiceBuilder;
 use Throwable;
 
-class B24Service
+readonly class B24Service
 {
-    public function __construct(private readonly ServiceBuilder $b24) { }
+    public function __construct(private ServiceBuilder $b24) { }
 
     public function getDealContactIds(int $id): ?array
     {
