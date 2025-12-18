@@ -6,14 +6,13 @@ use App\Repositories\ClientRepository;
 use App\Repositories\ReviewRepository;
 use App\Services\B24Service;
 use App\Services\LinkService;
+use App\Services\ReviewService;
 
 readonly class ReviewController
 {
     public function __construct(
         private LinkService $linkService,
-        private ReviewRepository $reviewRepository,
-        private ClientRepository $clientRepository,
-        private B24Service $b24Service,
+        private ReviewService $reviewService
     ) { }
 
     public function showForm(string $code, string $encoded): void
@@ -24,35 +23,15 @@ readonly class ReviewController
 
     public function submit(): void
     {
-        $clientCode  = $_REQUEST['code'] ?? '';
-        $encoded     = $_REQUEST['encoded'] ?? '';
-        $ratingValue = isset($_REQUEST['rating']) ? (int) $_REQUEST['rating'] : null;
-        $reviewValue = trim((string) ($_REQUEST['review'] ?? ''));
+        $decoded = $this->linkService->decodeParams($_REQUEST['encoded']);
 
-        $decoded = $this->linkService->decodeParams($encoded);
+        $clientCode = $_REQUEST['code'] ?? '';
+        $contactId  = (int) $decoded['contactId'];
+        $dealId     = (int) $decoded['dealId'];
+        $rating     = isset($_REQUEST['rating']) ? (int) $_REQUEST['rating'] : null;
+        $comment    = trim((string) ($_REQUEST['review'] ?? ''));
 
-        $contactId = (int) $decoded['contactId'];
-        $dealId    = (int) $decoded['dealId'];
-
-        $client = $this->clientRepository->getByCode($clientCode);
-
-        $this->reviewRepository->create([
-            'clientId'  => (int) $client['id'],
-            'contactId' => $contactId,
-            'dealId'    => $dealId,
-            'rating'    => $ratingValue,
-            'comment'   => $reviewValue,
-        ]);
-
-        $dealTitle = $this->b24Service->getDealTitleById($dealId);
-        $this->b24Service->addCommentToContact($contactId, "Добавлен отзыв по сделке <a href='/crm/deal/details/$dealId/'>$dealTitle</a>.
-Оценка: $ratingValue
-Комментарий: $reviewValue");
-
-        $contactName = $this->b24Service->getContactTitleById($contactId);
-        $this->b24Service->addCommentToDeal($dealId, "<a href='/crm/contact/details/$contactId/'>$contactName</a> добавил отзыв.
-Оценка: $ratingValue
-Комментарий: $reviewValue");
+        $this->reviewService->submitReview($clientCode, $contactId, $dealId, $rating, $comment);
 
         http_response_code(200);
         require __DIR__ . '/../../views/reviewsubmit.php';
