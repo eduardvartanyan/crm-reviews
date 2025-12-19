@@ -3,62 +3,68 @@
 namespace App\Support;
 
 use PDO;
-use PDOException;
-use RuntimeException;
 
-class System
+final class System
 {
     public static function getWebhook(): ?string
     {
-        $pdo = Database::pdo();
-
-        if (isset($_REQUEST['auth']['domain'])) {
-            try {
-                $stmt = $pdo->prepare("
-                SELECT * 
-                FROM clients 
-                WHERE domain = :domain;
-            ");
-                $stmt->execute([
-                    ':domain' => $_REQUEST['auth']['domain'],
-                ]);
-
-                $client = $stmt->fetch(PDO::FETCH_ASSOC);
-            } catch (PDOException $e) {
-                throw new RuntimeException(
-                    '[ClientRepository->getByDomain] Error selecting from clients -> ' . $e->getMessage()
-                );
-            }
-        } else {
-            $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
-            if (preg_match('#^/r/([^/]+)/([^/]+)/?$#', $uri, $matches)) {
-                $code = $matches[1];
-            } else {
-                $code = $_POST['code'];
-            }
-
-            if (empty($code)) { return null; }
-
-            try {
-                $stmt = $pdo->prepare("
-                SELECT * 
-                FROM clients 
-                WHERE code = :code;
-            ");
-                $stmt->execute([
-                    ':code' => $code,
-                ]);
-
-                $client = $stmt->fetch(PDO::FETCH_ASSOC);
-            } catch (PDOException $e) {
-                throw new RuntimeException(
-                    '[ClientRepository->getByCode] Error selecting from clients -> ' . $e->getMessage()
-                );
-            }
+        $identifier = self::resolveClientIdentifier();
+        if (!$identifier) {
+            return null;
         }
 
-        if (empty($client)) { return null; }
+        $client = self::findClient($identifier);
+        return $client['web_hook'] ?? null;
+    }
 
-        return $client['web_hook'];
+    public static function resolveClientIdentifier(): ?array
+    {
+        if (!empty($_REQUEST['auth']['domain'])) {
+            return [
+                'type' => 'domain',
+                'value' => $_REQUEST['auth']['domain'],
+            ];
+        }
+
+        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
+        if (preg_match('#^/r/([^/]+)/#', $uri, $m)) {
+            return [
+                'type' => 'code',
+                'value' => $m[1],
+            ];
+        }
+
+        if (!empty($_POST['code'])) {
+            return [
+                'type' => 'code',
+                'value' => $_POST['code'],
+            ];
+        }
+
+        return null;
+    }
+
+    public static function findClient(array $identifier): ?array
+    {
+        $pdo = Database::pdo();
+
+        if ($identifier['type'] === 'domain') {
+            $stmt = $pdo->prepare('
+                SELECT * 
+                FROM clients 
+                WHERE domain = :value 
+                LIMIT 1
+            ');
+        } else {
+            $stmt = $pdo->prepare('
+                SELECT * 
+                FROM clients 
+                WHERE code = :value 
+                LIMIT 1
+          ');
+        }
+
+        $stmt->execute(['value' => $identifier['value']]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 }
