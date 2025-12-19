@@ -94,6 +94,8 @@ class ClientRepository
         }
     }
 
+    // Todo: Объединить в одну функцию
+
     public function updateCodeByDomain(string $domain, string $code): void
     {
         $stmt = $this->pdo->prepare("
@@ -119,6 +121,20 @@ class ClientRepository
         $stmt->execute([
             ':title'  => $title,
             ':domain' => $domain,
+        ]);
+    }
+
+    public function updateWebhookByDomain(string $domain, string $webhook): void
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE clients
+            SET web_hook = :web_hook
+            WHERE domain = :domain
+        ");
+
+        $stmt->execute([
+            ':web_hook' => $webhook,
+            ':domain'   => $domain,
         ]);
     }
 }

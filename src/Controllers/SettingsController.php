@@ -19,9 +19,10 @@ class SettingsController
     {
         header('Content-Type: application/json; charset=utf-8');
 
-        $domain = $_REQUEST['domain'] ?? null;
-        $code   = trim($_REQUEST['code'] ?? '');
-        $title  = trim($_REQUEST['title'] ?? '');
+        $domain  = $_REQUEST['domain'] ?? null;
+        $code    = trim($_REQUEST['code'] ?? '');
+        $title   = trim($_REQUEST['title'] ?? '');
+        $webhook = trim($_REQUEST['webhook'] ?? '');
 
         if (!$domain) {
             http_response_code(400);
@@ -31,18 +32,25 @@ class SettingsController
 
         if ($title === '') {
             http_response_code(400);
-            echo json_encode(['error' => 'Title is empty']);
+            echo json_encode(['error' => 'Заполните название компании']);
             return;
         }
 
         if ($code === '') {
             http_response_code(400);
-            echo json_encode(['error' => 'Code is empty']);
+            echo json_encode(['error' => 'Заполните код для ссылки']);
+            return;
+        }
+
+        if ($webhook === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Заполните ссылку на вебхук']);
             return;
         }
 
         $this->clientRepository->updateCodeByDomain($domain, $code);
         $this->clientRepository->updateTitleByDomain($domain, $title);
+        $this->clientRepository->updateWebhookByDomain($domain, $webhook);
 
         http_response_code(200);
         echo json_encode(['status' => 'OK']);

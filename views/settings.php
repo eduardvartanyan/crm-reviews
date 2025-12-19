@@ -83,11 +83,25 @@ $client = $clientRepository->getByDomain($_REQUEST['DOMAIN']);
 
 <div class="b24-settings-card">
     <div class="b24-settings-title">
-        Настройки формы отзыва
+        Настройки
     </div>
 
     <form id="settings-form">
         <input type="hidden" name="domain" value="<?= htmlspecialchars($_REQUEST['DOMAIN']) ?>" />
+
+        <div class="b24-form-group">
+            <label for="webhook" class="b24-form-label">
+                Ссылка на вебхук:
+            </label>
+            <input
+                    id="webhook"
+                    class="b24-input"
+                    type="text"
+                    name="webhook"
+                    placeholder="Скопируйте в поле ссылку на входящий вебхук"
+                    value="<?= htmlspecialchars($client['web_hook'] ?? '') ?>"
+            />
+        </div>
 
         <div class="b24-form-group">
             <label for="title" class="b24-form-label">
