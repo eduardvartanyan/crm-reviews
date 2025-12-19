@@ -39,7 +39,7 @@ readonly class LinkService
                 'auth' => $_REQUEST['auth']['access_token'],
                 'event_token' => $_REQUEST['event_token'],
                 'return_values' => [
-                    'link' => $reviewLinks,
+                    'links' => $reviewLinks,
                 ]
             ]);
         $result = file_get_contents($url);

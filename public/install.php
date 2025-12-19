@@ -65,7 +65,7 @@ if ($result['rest_only'] === false):?>
                                     },
                                     'PROPERTIES': { },
                                     'RETURN_PROPERTIES': {
-                                        'link': {
+                                        'links': {
                                             'Name': {
                                                 'ru': 'Ссылки на отзывы'
                                             },

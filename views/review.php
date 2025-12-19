@@ -51,7 +51,6 @@ $client = $clientRepository->getByCode($code);
                     <textarea
                             name="review"
                             placeholder="Расскажите, что вам понравилось или что можно улучшить"
-                            required
                     ></textarea>
             </div>
 
