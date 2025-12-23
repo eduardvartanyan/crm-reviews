@@ -187,69 +187,76 @@ class Migrator
      */
     public function migrate(): void
     {
+        echo '<pre>';
+        $count = $this->getDealsCount();
+        echo 'Всего сделок: ' . $count . PHP_EOL;
+
+        $index = 1;
         foreach ($this->b24From->getCRMScope()->deal()->list(
             ['ID'],
             $this->dealsFilter,
             ['*', 'UF_*'],
-            100
+            0
         )->getDeals() as $deal) {
+            echo PHP_EOL . PHP_EOL . $index++ . ') Переносим сделку ID ' . $deal->ID;
+
             $fields = [
-                'TITLE'                 => $deal->TITLE,
-                'TYPE_ID'               => 'SALE',
-                'STAGE_ID'              => $this->dealStages[$deal->STAGE_ID] ?? $this->dealStages[0],
-                'CURRENCY_ID'           => self::CURRENCY_ID,
-                'OPPORTUNITY'           => $deal->OPPORTUNITY,
-                'TAX_VALUE'             => $deal->TAX_VALUE,
-                'LEAD_ID'               => $deal->LEAD_ID ? $this->getLeadId($deal->LEAD_ID) : '',
-                'COMPANY_ID'            => $deal->COMPANY_ID ? $this->getCompanyId($deal->COMPANY_ID) : '',
-                'BEGINDATE'             => $deal->BEGINDATE,
-                'CLOSEDATE'             => $deal->CLOSEDATE,
-                'ASSIGNED_BY_ID'        => $this->userIds[$deal->ASSIGNED_BY_ID] ?? 1,
-                'OPENED'                => $deal->OPENED,
-                'CLOSED'                => $deal->CLOSED,
-                'COMMENTS'              => $deal->COMMENTS,
-                'CATEGORY_ID'           => $this->dealCategories[$deal->CATEGORY_ID] ?? 0,
-                'SOURCE_ID'             => $this->sources[$deal->SOURCE_ID] ?? 'WEBFORM',
-                'SOURCE_DESCRIPTION'    => $deal->SOURCE_DESCRIPTION,
-                'UTM_SOURCE'            => $deal->UTM_SOURCE,
-                'UTM_MEDIUM'            => $deal->UTM_MEDIUM,
-                'UTM_CAMPAIGN'          => $deal->UTM_CAMPAIGN,
-                'UTM_CONTENT'           => $deal->UTM_CONTENT,
-                'UTM_TERM'              => $deal->UTM_TERM,
-                'ORIGINATOR_ID'         => 'b24-portal.ru',
-                'ORIGIN_ID'             => $deal->ID,
-                'UF_CRM_6948EC6B4508B'  => $deal->ID,
-                'UF_CRM_TRK_AWAIT_DAT'  => $deal->getUserfieldByFieldName('UF_CRM_TRK_AWAIT_DAT'),
-                'UF_CRM_TRK_PVZ_ADDR'   => $deal->getUserfieldByFieldName('UF_CRM_TRK_PVZ_ADDR'),
-                'UF_CRM_TRK_TRACKER'    => $deal->getUserfieldByFieldName('UF_CRM_TRK_TRACKER'),
-                'UF_CRM_TRK_STATUS_B'   => $deal->getUserfieldByFieldName('UF_CRM_TRK_STATUS_B'),
-                'UF_CRM_TRK_STATUS_E'   => $deal->getUserfieldByFieldName('UF_CRM_TRK_STATUS_E'),
-                'UF_CRM_TRK_HISTORY'    => $deal->getUserfieldByFieldName('UF_CRM_TRK_HISTORY'),
-                'UF_CRM_TRK_TRANSIT'    => $this->transportCompanies[$deal->getUserfieldByFieldName('UF_CRM_TRK_HISTORY')] ?? '',
-                'UF_CRM_6948E31E37C55'  => $deal->getUserfieldByFieldName('UF_CRM_UIS8F2F824737'),
-                'UF_CRM_6948E31E4BF5F'  => $this->cancellingReasons[$deal->getUserfieldByFieldName('UF_CRM_1667815923019')] ?? '',
-                'UF_CRM_6948E31E6748B'  => $this->saleTypes[$deal->getUserfieldByFieldName('UF_CRM_1711131849952')] ?? '',
-                'UF_CRM_6948E31E77BDC'  => $this->isNDS[$deal->getUserfieldByFieldName('UF_CRM_1716157643248')] ?? '',
-                'UF_CRM_6948E31E8BB26'  => $deal->getUserfieldByFieldName('UF_CRM_1736426797199'),
-                'UF_CRM_6948E31EB2D4D'  => $deal->getUserfieldByFieldName('UF_CRM_1749663183651'),
-                'UF_CRM_6948E31EC6336'  => $deal->getUserfieldByFieldName('UF_CRM_688F04F833203'),
-                'UF_CRM_6948E31F1AA47'  => $this->paymentMethods[$deal->getUserfieldByFieldName('UF_CRM_1615444230')] ?? '',
-                'UF_CRM_6948E31F74FE9'  => $deal->getUserfieldByFieldName('UF_CRM_1616840355'),
-                'UF_CRM_6948E31F859A2'  => $deal->getUserfieldByFieldName('UF_CRM_1619377793845'),
-                'UF_CRM_6948E31F9E9D6'  => $deal->getUserfieldByFieldName('UF_CRM_1615302002464'),
-                'UF_CRM_6948E31FB3892'  => $deal->getUserfieldByFieldName('UF_CRM_1615303137062'),
-                'UF_CRM_6948E31FC67FB'  => $this->shippingMethods[$deal->getUserfieldByFieldName('UF_CRM_1615444268')] ?? '',
-                'UF_CRM_6948E31FDA8A6'  => $deal->getUserfieldByFieldName('UF_CRM_1616331897'),
-                'UF_CRM_6948E31FEB504'  => $this->shippingStatuses[$deal->getUserfieldByFieldName('UF_CRM_1616761455')] ?? '',
-                'UF_CRM_6948E3200D5EE'  => $deal->getUserfieldByFieldName('UF_CRM_1615302232267'),
-                'UF_CRM_6948E3201A318'  => $deal->getUserfieldByFieldName('UF_CRM_1615303032511'),
-                'UF_CRM_6948E32028C8D'  => $deal->getUserfieldByFieldName('UF_CRM_1615303223096'),
-                'UF_CRM_6948E3203ACA2'  => $this->orderStatuses[$deal->getUserfieldByFieldName('UF_CRM_1616330958')] ?? '',
-                'UF_CRM_6948E32052FFE'  => $deal->getUserfieldByFieldName('UF_CRM_1616414163'),
-                'UF_CRM_6948E32061B2D'  => $deal->getUserfieldByFieldName('UF_CRM_1616870392'),
-                'UF_CRM_6948E3206ED3E'  => $deal->getUserfieldByFieldName('UF_CRM_1620590688'),
-                'UF_CRM_6948E3207BB4E'  => $deal->getUserfieldByFieldName('UF_CRM_1636274004254'),
-                'UF_CRM_6948E3208980C'  => $deal->getUserfieldByFieldName('UF_CRM_1639390200752 '),
+                'TITLE'                => $deal->TITLE,
+                'TYPE_ID'              => 'SALE',
+                'STAGE_ID'             => $this->dealStages[$deal->STAGE_ID] ?? $this->dealStages[0],
+                'CURRENCY_ID'          => self::CURRENCY_ID,
+                'OPPORTUNITY'          => $deal->OPPORTUNITY,
+                'TAX_VALUE'            => $deal->TAX_VALUE,
+                'LEAD_ID'              => $deal->LEAD_ID ? $this->getLeadId($deal->LEAD_ID) : '',
+                'COMPANY_ID'           => $deal->COMPANY_ID ? $this->getCompanyId($deal->COMPANY_ID) : '',
+                'BEGINDATE'            => $deal->BEGINDATE,
+                'CLOSEDATE'            => $deal->CLOSEDATE,
+                'ASSIGNED_BY_ID'       => $this->userIds[$deal->ASSIGNED_BY_ID] ?? 1,
+                'OPENED'               => $deal->OPENED,
+                'CLOSED'               => $deal->CLOSED,
+                'COMMENTS'             => $deal->COMMENTS,
+                'CATEGORY_ID'          => $this->dealCategories[$deal->CATEGORY_ID] ?? 0,
+                'SOURCE_ID'            => $this->sources[$deal->SOURCE_ID] ?? 'WEBFORM',
+                'SOURCE_DESCRIPTION'   => $deal->SOURCE_DESCRIPTION,
+                'UTM_SOURCE'           => $deal->UTM_SOURCE,
+                'UTM_MEDIUM'           => $deal->UTM_MEDIUM,
+                'UTM_CAMPAIGN'         => $deal->UTM_CAMPAIGN,
+                'UTM_CONTENT'          => $deal->UTM_CONTENT,
+                'UTM_TERM'             => $deal->UTM_TERM,
+                'ORIGINATOR_ID'        => 'b24-portal.ru',
+                'ORIGIN_ID'            => $deal->ID,
+                'UF_CRM_6948EC6B4508B' => $deal->ID,
+                'UF_CRM_TRK_AWAIT_DAT' => $deal->getUserfieldByFieldName('UF_CRM_TRK_AWAIT_DAT'),
+                'UF_CRM_TRK_PVZ_ADDR'  => $deal->getUserfieldByFieldName('UF_CRM_TRK_PVZ_ADDR'),
+                'UF_CRM_TRK_TRACKER'   => $deal->getUserfieldByFieldName('UF_CRM_TRK_TRACKER'),
+                'UF_CRM_TRK_STATUS_B'  => $deal->getUserfieldByFieldName('UF_CRM_TRK_STATUS_B'),
+                'UF_CRM_TRK_STATUS_E'  => $deal->getUserfieldByFieldName('UF_CRM_TRK_STATUS_E'),
+                'UF_CRM_TRK_HISTORY'   => $deal->getUserfieldByFieldName('UF_CRM_TRK_HISTORY'),
+                'UF_CRM_TRK_TRANSIT'   => $this->transportCompanies[$deal->getUserfieldByFieldName('UF_CRM_TRK_HISTORY')] ?? '',
+                'UF_CRM_6948E31E37C55' => $deal->getUserfieldByFieldName('UF_CRM_UIS8F2F824737'),
+                'UF_CRM_6948E31E4BF5F' => $this->cancellingReasons[$deal->getUserfieldByFieldName('UF_CRM_1667815923019')] ?? '',
+                'UF_CRM_6948E31E6748B' => $this->saleTypes[$deal->getUserfieldByFieldName('UF_CRM_1711131849952')] ?? '',
+                'UF_CRM_6948E31E77BDC' => $this->isNDS[$deal->getUserfieldByFieldName('UF_CRM_1716157643248')] ?? '',
+                'UF_CRM_6948E31E8BB26' => $deal->getUserfieldByFieldName('UF_CRM_1736426797199'),
+                'UF_CRM_6948E31EB2D4D' => $deal->getUserfieldByFieldName('UF_CRM_1749663183651'),
+                'UF_CRM_6948E31EC6336' => $deal->getUserfieldByFieldName('UF_CRM_688F04F833203'),
+                'UF_CRM_6948E31F1AA47' => $this->paymentMethods[$deal->getUserfieldByFieldName('UF_CRM_1615444230')] ?? '',
+                'UF_CRM_6948E31F74FE9' => $deal->getUserfieldByFieldName('UF_CRM_1616840355'),
+                'UF_CRM_6948E31F859A2' => $deal->getUserfieldByFieldName('UF_CRM_1619377793845'),
+                'UF_CRM_6948E31F9E9D6' => $deal->getUserfieldByFieldName('UF_CRM_1615302002464'),
+                'UF_CRM_6948E31FB3892' => $deal->getUserfieldByFieldName('UF_CRM_1615303137062'),
+                'UF_CRM_6948E31FC67FB' => $this->shippingMethods[$deal->getUserfieldByFieldName('UF_CRM_1615444268')] ?? '',
+                'UF_CRM_6948E31FDA8A6' => $deal->getUserfieldByFieldName('UF_CRM_1616331897'),
+                'UF_CRM_6948E31FEB504' => $this->shippingStatuses[$deal->getUserfieldByFieldName('UF_CRM_1616761455')] ?? '',
+                'UF_CRM_6948E3200D5EE' => $deal->getUserfieldByFieldName('UF_CRM_1615302232267'),
+                'UF_CRM_6948E3201A318' => $deal->getUserfieldByFieldName('UF_CRM_1615303032511'),
+                'UF_CRM_6948E32028C8D' => $deal->getUserfieldByFieldName('UF_CRM_1615303223096'),
+                'UF_CRM_6948E3203ACA2' => $this->orderStatuses[$deal->getUserfieldByFieldName('UF_CRM_1616330958')] ?? '',
+                'UF_CRM_6948E32052FFE' => $deal->getUserfieldByFieldName('UF_CRM_1616414163'),
+                'UF_CRM_6948E32061B2D' => $deal->getUserfieldByFieldName('UF_CRM_1616870392'),
+                'UF_CRM_6948E3206ED3E' => $deal->getUserfieldByFieldName('UF_CRM_1620590688'),
+                'UF_CRM_6948E3207BB4E' => $deal->getUserfieldByFieldName('UF_CRM_1636274004254'),
+                'UF_CRM_6948E3208980C' => $deal->getUserfieldByFieldName('UF_CRM_1639390200752'),
             ];
 
 
@@ -264,8 +271,10 @@ class Migrator
 
             if ($id > 0) {
                 $this->b24To->getCRMScope()->deal()->update($id, $fields);
+                echo PHP_EOL . 'Обновлена сделка ' . $id;
             } else {
                 $id = $this->b24To->getCRMScope()->deal()->add($fields)->getId();
+                echo PHP_EOL . 'Добавлена сделка ' . $id;
             }
 
 
@@ -318,6 +327,8 @@ class Migrator
             ['ID']
         )->getLeads() as $lead) {
             $id = $lead->ID;
+
+            echo PHP_EOL . 'Добавлена связь с лидом ' . $id;
         }
 
         if ($id > 0) return $id;
@@ -381,6 +392,8 @@ class Migrator
         ];
 
         $newId = $this->b24To->getCRMScope()->lead()->add($fields)->getId();
+
+        echo PHP_EOL . 'Создан лид ' . $newId;
 
         $this->migrateLeadProductRows($id, $newId);
 
@@ -512,6 +525,8 @@ class Migrator
             ['ID']
         )->getCompanies() as $item) {
             $id = $item->ID;
+
+            echo PHP_EOL . 'Добавлена связь с компанией ' . $id;
         }
 
         if ($id > 0) return $id;
@@ -572,6 +587,8 @@ class Migrator
 
         $newId = $this->b24To->getCRMScope()->company()->add($fields)->getId();
 
+        echo PHP_EOL . 'Создана компания ' . $newId;
+
         $this->migrateRequisite(self::ENTITY_TYPE_ID_COMPANY, $id, $newId);
         $this->migrateAddress(self::ENTITY_TYPE_ID_COMPANY, $id, $newId);
 
@@ -594,6 +611,8 @@ class Migrator
             0
         )->getContacts() as $item) {
             $id = $item->ID;
+
+            echo PHP_EOL . 'Добавлена связь с контактом ' . $id;
         }
 
         if ($id > 0) return $id;
@@ -648,6 +667,8 @@ class Migrator
         ];
 
         $newId = $this->b24To->getCRMScope()->contact()->add($fields)->getId();
+
+        echo PHP_EOL . 'Создан контакт ' . $newId;
 
         $this->migrateRequisite(self::ENTITY_TYPE_ID_CONTACT, $id, $newId);
         $this->migrateAddress(self::ENTITY_TYPE_ID_CONTACT, $id, $newId);
@@ -743,6 +764,8 @@ class Migrator
                 $fields
             )->getId();
 
+            echo PHP_EOL . 'Добавлены реквизиты';
+
             if ($requisiteId > 0 && isset($result['BANK_DETAIL_ID'])) {
                 $bRequisite = $this->b24From->getCRMScope()->requisiteBankdetail()->get($result['BANK_DETAIL_ID'])->bankdetail();
 
@@ -811,6 +834,8 @@ class Migrator
             ];
 
             $this->b24To->getCRMScope()->address()->add($fields);
+
+            echo PHP_EOL . 'Добавлена адрес';
         }
     }
 
@@ -886,5 +911,9 @@ try {
     );
     $migrator->migrate();
 } catch (Throwable $e) {
-    echo $e->getMessage();
+    echo print_r([
+        'file'    => $e->getFile(),
+        'line'    => $e->getLine(),
+        'message' => $e->getMessage()
+    ], true);
 }
