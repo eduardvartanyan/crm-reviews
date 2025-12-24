@@ -185,20 +185,23 @@ class Migrator
      * @throws TransportException
      * @throws BaseException
      */
-    public function migrate(): void
+    public function migrate($page, $part): void
     {
         echo '<pre>';
         $count = $this->getDealsCount();
         echo 'Всего сделок: ' . $count . PHP_EOL;
 
-        $index = 1;
-        foreach ($this->b24From->getCRMScope()->deal()->list(
+        $deals = $this->b24From->getCRMScope()->deal()->list(
             ['ID'],
             $this->dealsFilter,
             ['*', 'UF_*'],
-            0
-        )->getDeals() as $deal) {
-            echo PHP_EOL . PHP_EOL . $index++ . ') Переносим сделку ID ' . $deal->ID;
+            ($page - 1) * 50
+        )->getDeals();
+
+        for ($i = ($part - 1) * 25; $i < $part * 25; $i++) {
+            $deal = $deals[$i];
+
+            echo PHP_EOL . PHP_EOL . ($i * $part + 1) . ') Переносим сделку ID ' . $deal->ID;
 
             $fields = [
                 'TITLE'                => $deal->TITLE,
@@ -275,6 +278,8 @@ class Migrator
             } else {
                 $id = $this->b24To->getCRMScope()->deal()->add($fields)->getId();
                 echo PHP_EOL . 'Добавлена сделка ' . $id;
+
+                $this->migrateProductRows($deal->ID, $id, 'deal');
             }
 
 
@@ -395,7 +400,7 @@ class Migrator
 
         echo PHP_EOL . 'Создан лид ' . $newId;
 
-        $this->migrateLeadProductRows($id, $newId);
+        $this->migrateProductRows($id, $newId, 'lead');
 
         if ($lead->COMPANY_ID) {
             $companyId = $this->getCompanyId($lead->COMPANY_ID, $lead->ID);
@@ -432,11 +437,11 @@ class Migrator
      * @throws TransportException
      * @throws BaseException
      */
-    private function migrateLeadProductRows(int $idFrom, int $idTo): void
+    private function migrateProductRows(int $idFrom, int $idTo, string $entityCode): void
     {
         $rows = [];
 
-        foreach ($this->b24From->core->call('crm.lead.productrows.get', [
+        foreach ($this->b24From->core->call("crm.$entityCode.productrows.get", [
                 'id' => $idFrom,
         ])->getResponseData()->getResult() as $row) {
             $productId = $this->getProductId([
@@ -457,7 +462,7 @@ class Migrator
         }
 
         $this->b24To->core->call(
-            'crm.lead.productrows.set', [
+            "crm.$entityCode.productrows.set", [
                 'id' => $idTo,
                 'rows' => $rows,
             ]
@@ -818,8 +823,10 @@ class Migrator
             ],
             []
         )->getAddresses() as $address) {
+            $addressData = iterator_to_array($address);
+            $typeId = isset($addressData['TYPE_ID']) ? (int) $addressData['TYPE_ID'] : 0;
             $fields = [
-                'TYPE_ID'        => $address->TYPE_ID,
+                'TYPE_ID'        => $typeId,
                 'ENTITY_TYPE_ID' => $address->ENTITY_TYPE_ID,
                 'ENTITY_ID'      => $idTo,
                 'ADDRESS_1'      => $address->ADDRESS_1,
@@ -835,7 +842,7 @@ class Migrator
 
             $this->b24To->getCRMScope()->address()->add($fields);
 
-            echo PHP_EOL . 'Добавлена адрес';
+            echo PHP_EOL . 'Добавлен адрес';
         }
     }
 
@@ -900,6 +907,10 @@ class Migrator
     }
 }
 
+// https://crm-reviews.ru/migration.php?page=1&part=1
+
+$page = $_GET['page'] ?? 1;
+$part = $_GET['part'] ?? 1;
 
 try {
     $migrator = new Migrator(
@@ -909,7 +920,7 @@ try {
             'CATEGORY_ID' => [1, 5],
         ]
     );
-    $migrator->migrate();
+    $migrator->migrate($page, $part);
 } catch (Throwable $e) {
     echo print_r([
         'file'    => $e->getFile(),
