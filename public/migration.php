@@ -201,7 +201,10 @@ class Migrator
         for ($i = ($part - 1) * 25; $i < $part * 25; $i++) {
             $deal = $deals[$i];
 
-            echo PHP_EOL . PHP_EOL . $i . ') Переносим сделку ID ' . $deal->ID;
+            echo PHP_EOL . PHP_EOL . ($i * $part + 1) . ') Переносим сделку ID ' . $deal->ID;
+
+            $leadId = $deal->LEAD_ID ? $this->getLeadId($deal->LEAD_ID) : null;
+            $companyId = $deal->COMPANY_ID ? $this->getCompanyId($deal->COMPANY_ID) : null;
 
             $fields = [
                 'TITLE'                => $deal->TITLE,
@@ -210,8 +213,8 @@ class Migrator
                 'CURRENCY_ID'          => self::CURRENCY_ID,
                 'OPPORTUNITY'          => $deal->OPPORTUNITY,
                 'TAX_VALUE'            => $deal->TAX_VALUE,
-                'LEAD_ID'              => $deal->LEAD_ID ? $this->getLeadId($deal->LEAD_ID) : '',
-                'COMPANY_ID'           => $deal->COMPANY_ID ? $this->getCompanyId($deal->COMPANY_ID) : '',
+                'LEAD_ID'              => $leadId,
+                'COMPANY_ID'           => $companyId,
                 'BEGINDATE'            => $deal->BEGINDATE,
                 'CLOSEDATE'            => $deal->CLOSEDATE,
                 'ASSIGNED_BY_ID'       => $this->userIds[$deal->ASSIGNED_BY_ID] ?? 1,
@@ -545,59 +548,64 @@ class Migrator
      */
     private function migrateCompany(int $id, int $leadId): int
     {
-        $company = $this->b24From->getCRMScope()->company()->get($id)->company();
+        foreach ($this->b24From->getCRMScope()->company()->list(
+            [],
+            ['ID' => $id],
+            ['*', 'UF_*']
+        )->getCompanies() as $company) {
+            $fields = [
+                'TITLE'                    => $company->TITLE,
+                'LEAD_ID'                  => $leadId,
+                'HAS_PHONE'                => $company->HAS_PHONE,
+                'HAS_EMAIL'                => $company->HAS_EMAIL,
+                'HAS_IMOL'                 => $company->HAS_IMOL,
+                'ASSIGNED_BY_ID'           => $this->userIds[$company->ASSIGNED_BY_ID] ?? 1,
+                'COMMENTS'                 => $company->COMMENTS,
+                'ADDRESS'                  => $company->ADDRESS,
+                'ADDRESS_2'                => $company->ADDRESS_2,
+                'ADDRESS_CITY'             => $company->ADDRESS_CITY,
+                'ADDRESS_POSTAL_CODE'      => $company->ADDRESS_POSTAL_CODE,
+                'ADDRESS_REGION'           => $company->ADDRESS_REGION,
+                'ADDRESS_PROVINCE'         => $company->ADDRESS_PROVINCE,
+                'ADDRESS_COUNTRY'          => $company->ADDRESS_COUNTRY,
+                'ADDRESS_COUNTRY_CODE'     => $company->ADDRESS_COUNTRY_CODE,
+                'ADDRESS_LOC_ADDR_ID'      => $company->ADDRESS_LOC_ADDR_ID,
+                'ADDRESS_LEGAL'            => $company->ADDRESS_LEGAL,
+                'REG_ADDRESS'              => $company->REG_ADDRESS,
+                'REG_ADDRESS_2'            => $company->REG_ADDRESS_2,
+                'REG_ADDRESS_CITY'         => $company->REG_ADDRESS_CITY,
+                'REG_ADDRESS_POSTAL_CODE'  => $company->REG_ADDRESS_POSTAL_CODE,
+                'REG_ADDRESS_REGION'       => $company->REG_ADDRESS_REGION,
+                'REG_ADDRESS_PROVINCE'     => $company->REG_ADDRESS_PROVINCE,
+                'REG_ADDRESS_COUNTRY'      => $company->REG_ADDRESS_COUNTRY,
+                'REG_ADDRESS_COUNTRY_CODE' => $company->REG_ADDRESS_COUNTRY_CODE,
+                'REG_ADDRESS_LOC_ADDR_ID'  => $company->REG_ADDRESS_LOC_ADDR_ID,
+                'UTM_SOURCE'               => $company->UTM_SOURCE,
+                'UTM_MEDIUM'               => $company->UTM_MEDIUM,
+                'UTM_CAMPAIGN'             => $company->UTM_CAMPAIGN,
+                'UTM_CONTENT'              => $company->UTM_CONTENT,
+                'UTM_TERM'                 => $company->UTM_TERM,
+                'PHONE'                    => $company->PHONE ? $this->preparePhone($company->PHONE) : [],
+                'EMAIL'                    => $company->EMAIL ? $this->prepareEmail($company->EMAIL) : [],
+                'WEB'                      => $company->WEB ? $this->prepareWebsite($company->WEB) : [],
+                'IM'                       => $company->IM ? $this->prepareMessenger($company->IM) : [],
+                'ORIGINATOR_ID'            => 'b24-portal.ru',
+                'ORIGIN_ID'                => $company->ID,
+                'UF_CRM_1766365952'        => $company->ID,
+                'UF_CRM_6948E31C0717C'     => $company->getUserfieldByFieldName('UF_CRM_UIS707361B1FA'),
+                'UF_CRM_6948E31E07A5D'     => $company->getUserfieldByFieldName('UF_CRM_686B9BA3258FF'),
+            ];
 
-        $fields = [
-            'TITLE'                    => $company->TITLE,
-            'LEAD_ID'                  => $leadId,
-            'HAS_PHONE'                => $company->HAS_PHONE,
-            'HAS_EMAIL'                => $company->HAS_EMAIL,
-            'HAS_IMOL'                 => $company->HAS_IMOL,
-            'ASSIGNED_BY_ID'           => $this->userIds[$company->ASSIGNED_BY_ID] ?? 1,
-            'COMMENTS'                 => $company->COMMENTS,
-            'ADDRESS'                  => $company->ADDRESS,
-            'ADDRESS_2'                => $company->ADDRESS_2,
-            'ADDRESS_CITY'             => $company->ADDRESS_CITY,
-            'ADDRESS_POSTAL_CODE'      => $company->ADDRESS_POSTAL_CODE,
-            'ADDRESS_REGION'           => $company->ADDRESS_REGION,
-            'ADDRESS_PROVINCE'         => $company->ADDRESS_PROVINCE,
-            'ADDRESS_COUNTRY'          => $company->ADDRESS_COUNTRY,
-            'ADDRESS_COUNTRY_CODE'     => $company->ADDRESS_COUNTRY_CODE,
-            'ADDRESS_LOC_ADDR_ID'      => $company->ADDRESS_LOC_ADDR_ID,
-            'ADDRESS_LEGAL'            => $company->ADDRESS_LEGAL,
-            'REG_ADDRESS'              => $company->REG_ADDRESS,
-            'REG_ADDRESS_2'            => $company->REG_ADDRESS_2,
-            'REG_ADDRESS_CITY'         => $company->REG_ADDRESS_CITY,
-            'REG_ADDRESS_POSTAL_CODE'  => $company->REG_ADDRESS_POSTAL_CODE,
-            'REG_ADDRESS_REGION'       => $company->REG_ADDRESS_REGION,
-            'REG_ADDRESS_PROVINCE'     => $company->REG_ADDRESS_PROVINCE,
-            'REG_ADDRESS_COUNTRY'      => $company->REG_ADDRESS_COUNTRY,
-            'REG_ADDRESS_COUNTRY_CODE' => $company->REG_ADDRESS_COUNTRY_CODE,
-            'REG_ADDRESS_LOC_ADDR_ID'  => $company->REG_ADDRESS_LOC_ADDR_ID,
-            'UTM_SOURCE'               => $company->UTM_SOURCE,
-            'UTM_MEDIUM'               => $company->UTM_MEDIUM,
-            'UTM_CAMPAIGN'             => $company->UTM_CAMPAIGN,
-            'UTM_CONTENT'              => $company->UTM_CONTENT,
-            'UTM_TERM'                 => $company->UTM_TERM,
-            'PHONE'                    => $company->PHONE ? $this->preparePhone($company->PHONE) : [],
-            'EMAIL'                    => $company->EMAIL ? $this->prepareEmail($company->EMAIL) : [],
-            'WEB'                      => $company->WEB ? $this->prepareWebsite($company->WEB) : [],
-            'IM'                       => $company->IM ? $this->prepareMessenger($company->IM) : [],
-            'ORIGINATOR_ID'            => 'b24-portal.ru',
-            'ORIGIN_ID'                => $company->ID,
-            'UF_CRM_1766365952'        => $company->ID,
-            'UF_CRM_6948E31C0717C'     => $company->getUserfieldByFieldName('UF_CRM_UIS707361B1FA'),
-            'UF_CRM_6948E31E07A5D'     => $company->getUserfieldByFieldName('UF_CRM_686B9BA3258FF'),
-        ];
+            $newId = $this->b24To->getCRMScope()->company()->add($fields)->getId();
 
-        $newId = $this->b24To->getCRMScope()->company()->add($fields)->getId();
+            echo PHP_EOL . 'Создана компания ' . $newId;
 
-        echo PHP_EOL . 'Создана компания ' . $newId;
+            $this->migrateRequisite(self::ENTITY_TYPE_ID_COMPANY, $id, $newId);
 
-        $this->migrateRequisite(self::ENTITY_TYPE_ID_COMPANY, $id, $newId);
-        $this->migrateAddress(self::ENTITY_TYPE_ID_COMPANY, $id, $newId);
+            return $newId;
+        }
 
-        return $newId;
+        return 0;
     }
 
     /**
@@ -631,54 +639,61 @@ class Migrator
      */
     private function migrateContact(int $id, int $leadId): int
     {
-        $contact = $this->b24From->getCRMScope()->contact()->get($id)->contact();
+        foreach ($this->b24From->getCRMScope()->contact()->list(
+            [],
+            ['ID' => $id],
+            ['*', 'UF_*'],
+            0
+        )->getContacts() as $contact) {
 
-        $fields = [
-            'COMMENTS'            => $contact->COMMENTS,
-            'NAME'                => $contact->NAME,
-            'SECOND_NAME'         => $contact->SECOND_NAME,
-            'LAST_NAME'           => $contact->LAST_NAME,
-            'LEAD_ID'             => $leadId,
-            'SOURCE_ID'           => $this->sources[$contact->SOURCE_ID] ?? 'WEBFORM',
-            'SOURCE_DESCRIPTION'  => $contact->SOURCE_DESCRIPTION,
-            'COMPANY_ID'          => $contact->COMPANY_ID ? $this->getCompanyId($contact->COMPANY_ID) : '',
-            'BIRTHDATE'           => $contact->BIRTHDATE,
-            'HAS_PHONE'           => $contact->HAS_PHONE,
-            'HAS_EMAIL'           => $contact->HAS_EMAIL,
-            'HAS_IMOL'            => $contact->HAS_IMOL,
-            'ASSIGNED_BY_ID'      => $this->userIds[$contact->ASSIGNED_BY_ID] ?? 1,
-            'ADDRESS'             => $contact->ADDRESS,
-            'ADDRESS_2'           => $contact->ADDRESS_2,
-            'ADDRESS_CITY'        => $contact->ADDRESS_CITY,
-            'ADDRESS_POSTAL_CODE' => $contact->ADDRESS_POSTAL_CODE,
-            'ADDRESS_REGION'      => $contact->ADDRESS_REGION,
-            'ADDRESS_COUNTRY'     => $contact->ADDRESS_COUNTRY,
-            'ADDRESS_LOC_ADDR_ID' => $contact->ADDRESS_LOC_ADDR_ID,
-            'UTM_SOURCE'          => $contact->UTM_SOURCE,
-            'UTM_MEDIUM'          => $contact->UTM_MEDIUM,
-            'UTM_CAMPAIGN'        => $contact->UTM_CAMPAIGN,
-            'UTM_CONTENT'         => $contact->UTM_CONTENT,
-            'UTM_TERM'            => $contact->UTM_TERM,
-            'PHONE'               => $contact->PHONE ? $this->preparePhone($contact->PHONE) : [],
-            'EMAIL'               => $contact->EMAIL ? $this->prepareEmail($contact->EMAIL) : [],
-            'WEB'                 => $contact->WEB ? $this->prepareWebsite($contact->WEB) : [],
-            'IM'                  => $contact->IM ? $this->prepareMessenger($contact->IM) : [],
-            'ORIGINATOR_ID'       => 'b24-portal.ru',
-            'ORIGIN_ID'           => $contact->ID,
-            'UF_CRM_1766365928'   => $contact->ID,
-            'UF_CRM_1766365198'   => $contact->getUserfieldByFieldName('UF_CRM_1615484439'),
-            'UF_CRM_1766365231'   => $contact->getUserfieldByFieldName('UF_CRM_1667943093'),
-            'UF_CRM_1766365247'   => $contact->getUserfieldByFieldName('UF_CRM_1667943159'),
-        ];
+            $fields = [
+                'COMMENTS' => $contact->COMMENTS,
+                'NAME' => $contact->NAME,
+                'SECOND_NAME' => $contact->SECOND_NAME,
+                'LAST_NAME' => $contact->LAST_NAME,
+                'LEAD_ID' => $leadId,
+                'SOURCE_ID' => $this->sources[$contact->SOURCE_ID] ?? 'WEBFORM',
+                'SOURCE_DESCRIPTION' => $contact->SOURCE_DESCRIPTION,
+                'COMPANY_ID' => $contact->COMPANY_ID ? $this->getCompanyId($contact->COMPANY_ID) : '',
+                'BIRTHDATE' => $contact->BIRTHDATE,
+                'HAS_PHONE' => $contact->HAS_PHONE,
+                'HAS_EMAIL' => $contact->HAS_EMAIL,
+                'HAS_IMOL' => $contact->HAS_IMOL,
+                'ASSIGNED_BY_ID' => $this->userIds[$contact->ASSIGNED_BY_ID] ?? 1,
+                'ADDRESS' => $contact->ADDRESS,
+                'ADDRESS_2' => $contact->ADDRESS_2,
+                'ADDRESS_CITY' => $contact->ADDRESS_CITY,
+                'ADDRESS_POSTAL_CODE' => $contact->ADDRESS_POSTAL_CODE,
+                'ADDRESS_REGION' => $contact->ADDRESS_REGION,
+                'ADDRESS_COUNTRY' => $contact->ADDRESS_COUNTRY,
+                'ADDRESS_LOC_ADDR_ID' => $contact->ADDRESS_LOC_ADDR_ID,
+                'UTM_SOURCE' => $contact->UTM_SOURCE,
+                'UTM_MEDIUM' => $contact->UTM_MEDIUM,
+                'UTM_CAMPAIGN' => $contact->UTM_CAMPAIGN,
+                'UTM_CONTENT' => $contact->UTM_CONTENT,
+                'UTM_TERM' => $contact->UTM_TERM,
+                'PHONE' => $contact->PHONE ? $this->preparePhone($contact->PHONE) : [],
+                'EMAIL' => $contact->EMAIL ? $this->prepareEmail($contact->EMAIL) : [],
+                'WEB' => $contact->WEB ? $this->prepareWebsite($contact->WEB) : [],
+                'IM' => $contact->IM ? $this->prepareMessenger($contact->IM) : [],
+                'ORIGINATOR_ID' => 'b24-portal.ru',
+                'ORIGIN_ID' => $contact->ID,
+                'UF_CRM_1766365928' => $contact->ID,
+                'UF_CRM_1766365198' => $contact->getUserfieldByFieldName('UF_CRM_1615484439'),
+                'UF_CRM_1766365231' => $contact->getUserfieldByFieldName('UF_CRM_1667943093'),
+                'UF_CRM_1766365247' => $contact->getUserfieldByFieldName('UF_CRM_1667943159'),
+            ];
 
-        $newId = $this->b24To->getCRMScope()->contact()->add($fields)->getId();
+            $newId = $this->b24To->getCRMScope()->contact()->add($fields)->getId();
 
-        echo PHP_EOL . 'Создан контакт ' . $newId;
+            echo PHP_EOL . 'Создан контакт ' . $newId;
 
-        $this->migrateRequisite(self::ENTITY_TYPE_ID_CONTACT, $id, $newId);
-        $this->migrateAddress(self::ENTITY_TYPE_ID_CONTACT, $id, $newId);
+            $this->migrateRequisite(self::ENTITY_TYPE_ID_CONTACT, $id, $newId);
 
-        return $newId;
+            return $newId;
+        }
+
+        return 0;
     }
 
     /**
@@ -687,16 +702,14 @@ class Migrator
      */
     private function migrateRequisite(int $entityTypeId, int $idFrom, int $idTo): void
     {
-        $result = $this->b24From->core->call('crm.requisite.link.get',
+        foreach ($this->b24From->getCRMScope()->requisite()->list(
+            [],
             [
-                'entityTypeId' => $entityTypeId,
-                'entityId'     => $idFrom,
-            ]
-        )->getResponseData()->getResult();
-
-        if (isset($result['REQUISITE_ID'])) {
-            $requisite = $this->b24From->getCRMScope()->requisite()->get($result['REQUISITE_ID'])->requisite();
-
+                'ENTITY_TYPE_ID' => $entityTypeId,
+                'ENTITY_ID'     => $idTo,
+            ],
+            [],
+        )->getRequisites() as $requisite) {
             $fields = [
                 'ACTIVE'                 => $requisite->ACTIVE,
                 'RQ_NAME'                => $requisite->RQ_NAME,
@@ -764,134 +777,85 @@ class Migrator
             $requisiteId = $this->b24To->getCRMScope()->requisite()->add(
                 $idTo,
                 $entityTypeId,
-                $requisite->PRESET_ID,
+                (int) $requisite->PRESET_ID,
                 $requisite->NAME,
                 $fields
             )->getId();
 
             echo PHP_EOL . 'Добавлены реквизиты';
 
-            if ($requisiteId > 0 && isset($result['BANK_DETAIL_ID'])) {
-                $bRequisite = $this->b24From->getCRMScope()->requisiteBankdetail()->get($result['BANK_DETAIL_ID'])->bankdetail();
+            if ($requisiteId > 0) {
+                $result = $this->b24From->getCRMScope()->requisiteBankdetail()->list(
+                    [],
+                    ['ENTITY_ID' => $requisite->ID],
+                    [],
+                )->getBankdetails();
 
-                $fields = [
-                    'ENTITY_ID'         => $requisiteId,
-                    'COUNTRY_ID'        => $bRequisite->COUNTRY_ID,
-                    'NAME'              => $bRequisite->NAME,
-                    'CODE'              => $bRequisite->CODE,
-                    'XML_ID'            => $bRequisite->XML_ID,
-                    'ACTIVE'            => $bRequisite->ACTIVE,
-                    'SORT'              => $bRequisite->SORT,
-                    'RQ_BANK_NAME'      => $bRequisite->RQ_BANK_NAME,
-                    'RQ_BANK_CODE'      => $bRequisite->RQ_BANK_CODE,
-                    'RQ_BANK_ADDR'      => $bRequisite->RQ_BANK_ADDR,
-                    'RQ_BANK_ROUTE_NUM' => $bRequisite->RQ_BANK_ROUTE_NUM,
-                    'RQ_BIK'            => $bRequisite->RQ_BIK,
-                    'RQ_MFO'            => $bRequisite->RQ_MFO,
-                    'RQ_ACC_NAME'       => $bRequisite->RQ_ACC_NAME,
-                    'RQ_ACC_NUM'        => $bRequisite->RQ_ACC_NUM,
-                    'RQ_ACC_TYPE'       => $bRequisite->RQ_ACC_TYPE,
-                    'RQ_IIK'            => $bRequisite->RQ_IIK,
-                    'RQ_ACC_CURRENCY'   => $bRequisite->RQ_ACC_CURRENCY,
-                    'RQ_COR_ACC_NUM'    => $bRequisite->RQ_COR_ACC_NUM,
-                    'RQ_IBAN'           => $bRequisite->RQ_IBAN,
-                    'RQ_SWIFT'          => $bRequisite->RQ_SWIFT,
-                    'RQ_BIC'            => $bRequisite->RQ_BIC,
-                    'RQ_CODEB'          => $bRequisite->RQ_CODEB,
-                    'RQ_CODEG'          => $bRequisite->RQ_CODEG,
-                    'RQ_RIB'            => $bRequisite->RQ_RIB,
-                    'RQ_AGENCY_NAME'    => $bRequisite->RQ_AGENCY_NAME,
-                    'COMMENTS'          => $bRequisite->COMMENTS,
-                ];
+                foreach ($result as $bRequisite) {
+                    $fields = [
+                        'ENTITY_ID'         => $requisiteId,
+                        'COUNTRY_ID'        => $bRequisite->COUNTRY_ID,
+                        'NAME'              => $bRequisite->NAME,
+                        'CODE'              => $bRequisite->CODE,
+                        'XML_ID'            => $bRequisite->XML_ID,
+                        'ACTIVE'            => $bRequisite->ACTIVE,
+                        'SORT'              => $bRequisite->SORT,
+                        'RQ_BANK_NAME'      => $bRequisite->RQ_BANK_NAME,
+                        'RQ_BANK_CODE'      => $bRequisite->RQ_BANK_CODE,
+                        'RQ_BANK_ADDR'      => $bRequisite->RQ_BANK_ADDR,
+                        'RQ_BANK_ROUTE_NUM' => $bRequisite->RQ_BANK_ROUTE_NUM,
+                        'RQ_BIK'            => $bRequisite->RQ_BIK,
+                        'RQ_MFO'            => $bRequisite->RQ_MFO,
+                        'RQ_ACC_NAME'       => $bRequisite->RQ_ACC_NAME,
+                        'RQ_ACC_NUM'        => $bRequisite->RQ_ACC_NUM,
+                        'RQ_ACC_TYPE'       => $bRequisite->RQ_ACC_TYPE,
+                        'RQ_IIK'            => $bRequisite->RQ_IIK,
+                        'RQ_ACC_CURRENCY'   => $bRequisite->RQ_ACC_CURRENCY,
+                        'RQ_COR_ACC_NUM'    => $bRequisite->RQ_COR_ACC_NUM,
+                        'RQ_IBAN'           => $bRequisite->RQ_IBAN,
+                        'RQ_SWIFT'          => $bRequisite->RQ_SWIFT,
+                        'RQ_BIC'            => $bRequisite->RQ_BIC,
+                        'RQ_CODEB'          => $bRequisite->RQ_CODEB,
+                        'RQ_CODEG'          => $bRequisite->RQ_CODEG,
+                        'RQ_RIB'            => $bRequisite->RQ_RIB,
+                        'RQ_AGENCY_NAME'    => $bRequisite->RQ_AGENCY_NAME,
+                        'COMMENTS'          => $bRequisite->COMMENTS,
+                    ];
 
-                $this->b24To->getCRMScope()->requisiteBankdetail()->add($fields);
-            }
-        }
-    }
+                    $this->b24To->getCRMScope()->requisiteBankdetail()->add($fields);
 
-    /**
-     * @throws TransportException
-     * @throws BaseException
-     */
-    private function migrateAddress(int $entityTypeId, int $idFrom, int $idTo): void
-    {
-        $sourceAddresses = [];
-        $sourceTypeIds = [];
-        foreach ($this->b24From->getCRMScope()->address()->list(
-            [],
-            [
-                'ENTITY_TYPE_ID' => $entityTypeId,
-                'ENTITY_ID' => $idFrom,
-            ],
-            []
-        )->getAddresses() as $address) {
-            $addressData = iterator_to_array($address);
-            $typeId = isset($addressData['TYPE_ID']) ? (int) $addressData['TYPE_ID'] : 0;
-            if ($typeId <= 0) {
-                continue;
-            }
-            $sourceTypeIds[$typeId] = true;
-            $sourceAddresses[] = $address;
-        }
-
-        if ($sourceTypeIds === []) {
-            return;
-        }
-
-        $existingAddresses = $this->b24To->getCRMScope()->address()->list(
-            [],
-            [
-                'ENTITY_TYPE_ID' => $entityTypeId,
-                'ENTITY_ID' => $idTo,
-            ],
-            ['TYPE_ID']
-        )->getAddresses();
-
-        foreach ($existingAddresses as $existingAddress) {
-            $existingData = iterator_to_array($existingAddress);
-            $existingTypeId = isset($existingData['TYPE_ID']) ? (int) $existingData['TYPE_ID'] : 0;
-            if ($existingTypeId > 0 && isset($sourceTypeIds[$existingTypeId])) {
-                try {
-                    $this->b24To->getCRMScope()->address()->delete(
-                        $existingTypeId,
-                        $entityTypeId,
-                        $idTo
-                    );
-                    echo PHP_EOL . 'Удален адрес';
-                } catch (BaseException | TransportException $exception) {
-                    // If deletion fails, add will likely fail too; skip to avoid a hard stop.
-                    continue;
+                    echo PHP_EOL . 'Добавлены банковские реквизиты';
                 }
-            }
-        }
 
-        $seenTypeIds = [];
-        foreach ($sourceAddresses as $address) {
-            $addressData = iterator_to_array($address);
-            $typeId = isset($addressData['TYPE_ID']) ? (int) $addressData['TYPE_ID'] : 0;
-            if ($typeId <= 0 || isset($seenTypeIds[$typeId])) {
-                continue;
-            }
-            $fields = [
-                'TYPE_ID'        => $typeId,
-                'ENTITY_TYPE_ID' => $address->ENTITY_TYPE_ID,
-                'ENTITY_ID'      => $idTo,
-                'ADDRESS_1'      => $address->ADDRESS_1,
-                'ADDRESS_2'      => $address->ADDRESS_2,
-                'CITY'           => $address->CITY,
-                'POSTAL_CODE'    => $address->POSTAL_CODE,
-                'REGION'         => $address->REGION,
-                'PROVINCE'       => $address->PROVINCE,
-                'COUNTRY'        => $address->COUNTRY,
-                'COUNTRY_CODE'   => $address->COUNTRY_CODE,
-                'LOC_ADDR_ID'    => $address->LOC_ADDR_ID,
-            ];
+                foreach ($this->b24From->getCRMScope()->address()->list(
+                    [],
+                    [
+                        'ENTITY_TYPE_ID' => $entityTypeId,
+                        'ENTITY_ID' => $idFrom,
+                    ],
+                    []
+                )->getAddresses() as $address) {
+                    $addressData = iterator_to_array($address);
+                    $typeId = isset($addressData['TYPE_ID']) ? (int) $addressData['TYPE_ID'] : 0;
+                    $fields = [
+                        'TYPE_ID'        => $typeId,
+                        'ENTITY_TYPE_ID' => $address->ENTITY_TYPE_ID,
+                        'ENTITY_ID'      => $requisiteId,
+                        'ADDRESS_1'      => $address->ADDRESS_1,
+                        'ADDRESS_2'      => $address->ADDRESS_2,
+                        'CITY'           => $address->CITY,
+                        'POSTAL_CODE'    => $address->POSTAL_CODE,
+                        'REGION'         => $address->REGION,
+                        'PROVINCE'       => $address->PROVINCE,
+                        'COUNTRY'        => $address->COUNTRY,
+                        'COUNTRY_CODE'   => $address->COUNTRY_CODE,
+                        'LOC_ADDR_ID'    => $address->LOC_ADDR_ID,
+                    ];
 
-            $this->b24To->getCRMScope()->address()->add($fields);
-            echo PHP_EOL . 'Добавлен адрес';
+                    $this->b24To->getCRMScope()->address()->add($fields);
 
-            if ($typeId > 0) {
-                $seenTypeIds[$typeId] = true;
+                    echo PHP_EOL . 'Добавлен адрес';
+                }
             }
         }
     }
