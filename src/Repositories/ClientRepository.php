@@ -94,61 +94,47 @@ class ClientRepository
         }
     }
 
-    // Todo: Объединить в одну функцию
-
-    public function updateCodeByDomain(string $domain, string $code): void
+    /**
+     * @param string $domain
+     * @param array{
+     *      code: string,
+     *      title: string,
+     *      web_hook: string,
+     *      notify: 'Y'|'N'
+     *  } $values
+     * @return bool
+     */
+    public function updateByDomain(string $domain, array $values): bool
     {
+        if ($domain === '') return false;
+
         $stmt = $this->pdo->prepare("
-            UPDATE clients
-            SET code = :code
+            SELECT *
+            FROM clients
             WHERE domain = :domain
+            LIMIT 1;
         ");
 
-        $stmt->execute([
-            ':code'  => $code,
-            ':domain' => $domain,
-        ]);
-    }
+        if ($stmt->execute([':domain' => $domain]) === false) return false;
 
-    public function updateTitleByDomain(string $domain, string $title): void
-    {
-        $stmt = $this->pdo->prepare("
-            UPDATE clients
-            SET title = :title
-            WHERE domain = :domain
-        ");
+        if ($client = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-        $stmt->execute([
-            ':title'  => $title,
-            ':domain' => $domain,
-        ]);
-    }
+            $stmt = $this->pdo->prepare("
+                UPDATE clients
+                SET code = :code, title = :title, web_hook = :web_hook, notify = :notify
+                WHERE domain = :domain
+            ");
+            $stmt->execute([
+                ':code'     => $values['code'] ?? $client['code'],
+                ':title'    => $values['title'] ?? $client['title'],
+                ':web_hook' => $values['web_hook'] ?? $client['web_hook'],
+                ':notify'   => $values['notify'] ?? $client['notify'],
+                ':domain'   => $domain,
+            ]);
 
-    public function updateWebhookByDomain(string $domain, string $webhook): void
-    {
-        $stmt = $this->pdo->prepare("
-            UPDATE clients
-            SET web_hook = :web_hook
-            WHERE domain = :domain
-        ");
+            return true;
+        }
 
-        $stmt->execute([
-            ':web_hook' => $webhook,
-            ':domain'   => $domain,
-        ]);
-    }
-
-    public function updateNotifyByDomain(string $domain, string $notify): void
-    {
-        $stmt = $this->pdo->prepare("
-            UPDATE clients
-            SET notify = :notify
-            WHERE domain = :domain
-        ");
-
-        $stmt->execute([
-            ':notify' => $notify,
-            ':domain'   => $domain,
-        ]);
+        return false;
     }
 }

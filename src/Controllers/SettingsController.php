@@ -57,11 +57,12 @@ class SettingsController
             return;
         }
 
-        // Todo: Заменить на один метод
-        $this->clientRepository->updateCodeByDomain($domain, $code);
-        $this->clientRepository->updateTitleByDomain($domain, $title);
-        $this->clientRepository->updateWebhookByDomain($domain, $webhook);
-        $this->clientRepository->updateNotifyByDomain($domain, $notify);
+        $this->clientRepository->updateByDomain($domain, [
+            'code'     => $code,
+            'title'    => $title,
+            'web_hook' => $webhook,
+            'notify'   => $notify,
+        ]);
 
         http_response_code(200);
         echo json_encode(['status' => 'OK']);
