@@ -185,7 +185,7 @@ class Migrator
      * @throws TransportException
      * @throws BaseException
      */
-    public function migrate($page, $part): void
+    public function migrateDeals($page, $part): void
     {
         echo '<pre>';
         $count = $this->getDealsCount();
@@ -201,11 +201,9 @@ class Migrator
         for ($i = ($part - 1) * 25; $i < $part * 25; $i++) {
             $deal = $deals[$i];
 
-            echo PHP_EOL . PHP_EOL . $i . ') Переносим сделку ID ' . $deal->ID;
+            if (!$deal->ID) die;
 
-            if ($deal->LEAD_ID) {
-                $this->getLeadId($deal->LEAD_ID);
-            }
+            echo PHP_EOL . PHP_EOL . $i . ') Переносим сделку ID ' . $deal->ID;
 
             $fields = [
                 'TITLE'                => $deal->TITLE,
@@ -263,6 +261,7 @@ class Migrator
                 'UF_CRM_6948E3206ED3E' => $deal->getUserfieldByFieldName('UF_CRM_1620590688'),
                 'UF_CRM_6948E3207BB4E' => $deal->getUserfieldByFieldName('UF_CRM_1636274004254'),
                 'UF_CRM_6948E3208980C' => $deal->getUserfieldByFieldName('UF_CRM_1639390200752'),
+                'UF_CRM_1766635856'    => $deal->LEAD_ID ? $this->getLeadId($deal->LEAD_ID) : 0,
             ];
 
 
@@ -324,7 +323,7 @@ class Migrator
      * @throws TransportException
      * @throws BaseException
      */
-    private function getLeadId(int $oldId): int
+    private function getLeadId(int $oldId): ?int
     {
         if ($oldId === 0) return 0;
 
@@ -710,7 +709,7 @@ class Migrator
             [],
             [
                 'ENTITY_TYPE_ID' => $entityTypeId,
-                'ENTITY_ID'     => $idTo,
+                'ENTITY_ID'      => $idFrom,
             ],
             [],
         )->getRequisites() as $requisite) {
@@ -856,9 +855,12 @@ class Migrator
                         'LOC_ADDR_ID'    => $address->LOC_ADDR_ID,
                     ];
 
-                    $this->b24To->getCRMScope()->address()->add($fields);
-
-                    echo PHP_EOL . 'Добавлен адрес';
+                    try {
+                        $this->b24To->getCRMScope()->address()->add($fields);
+                        echo PHP_EOL . 'Добавлен адрес';
+                    } catch (Throwable $e) {
+                        echo PHP_EOL . 'Проблема с добавлением адреса';
+                    }
                 }
             }
         }
@@ -938,9 +940,9 @@ try {
             'CATEGORY_ID' => [1, 5],
         ]
     );
-    $migrator->migrate($page, $part);
+    $migrator->migrateDeals($page, $part);
 } catch (Throwable $e) {
-    echo print_r([
+    echo PHP_EOL . print_r([
         'file'    => $e->getFile(),
         'line'    => $e->getLine(),
         'message' => $e->getMessage()
