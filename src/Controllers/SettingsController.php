@@ -25,6 +25,7 @@ class SettingsController
         $title   = trim($_REQUEST['title']) ?? '';
         $webhook = trim($_REQUEST['webhook']) ?? '';
         $notify = (!empty($_REQUEST['notify']) && $_REQUEST['notify'] === 'Y') ? 'Y' : 'N';
+        $noRepeat = (!empty($_REQUEST['no_repeat']) && $_REQUEST['no_repeat'] === 'Y') ? 'Y' : 'N';
 
         if (!$domain) {
             http_response_code(400);
@@ -58,10 +59,11 @@ class SettingsController
         }
 
         $this->clientRepository->updateByDomain($domain, [
-            'code'     => $code,
-            'title'    => $title,
-            'web_hook' => $webhook,
-            'notify'   => $notify,
+            'code'      => $code,
+            'title'     => $title,
+            'web_hook'  => $webhook,
+            'notify'    => $notify,
+            'no_repeat' => $noRepeat,
         ]);
 
         http_response_code(200);

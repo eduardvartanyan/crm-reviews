@@ -59,4 +59,20 @@ readonly class ReviewService
             }
         }
     }
+
+    public function canShowReviewForm(int $contactId, int $dealId, string $code): bool
+    {
+        $client = $this->clientRepository->getByCode($code);
+
+        if ($this->isRepeatReviewDisabled($client)) {
+            return !$this->reviewRepository->hasReview($contactId, $dealId);
+        }
+
+        return true;
+    }
+
+    private function isRepeatReviewDisabled(array $client): bool
+    {
+        return $client['no_repeat'] === 'Y';
+    }
 }

@@ -14,8 +14,19 @@ readonly class ReviewController
 
     public function showForm(string $code, string $encoded): void
     {
+        $decoded = $this->linkService->decodeParams($encoded);
+
         http_response_code(200);
-        require __DIR__ . '/../../views/review.php';
+
+        if ($this->reviewService->canShowReviewForm(
+            $decoded['contactId'],
+            $decoded['dealId'],
+            $code
+        )) {
+            require __DIR__ . '/../../views/review.php';
+        } else {
+            require __DIR__ . '/../../views/reviewsubmit.php';
+        }
     }
 
     public function submit(): void

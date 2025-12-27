@@ -405,6 +405,25 @@ $client = $clientRepository->getByDomain($domain);
                         </div>
                     </div>
 
+                    <div class="b24-form-group">
+                        <label class="b24-checkbox">
+                            <input
+                                    type="checkbox"
+                                    name="no_repeat"
+                                    value="Y"
+                                <?= $client['no_repeat'] === 'Y' ? 'checked' : '' ?>
+                            />
+                            <span class="b24-checkbox-box"></span>
+                            <span class="b24-checkbox-label">
+                                Запретить повторный отзыв
+                            </span>
+                        </label>
+
+                        <div class="b24-form-hint">
+                            При установленной опции контакт не может дважды оставить отзыв по одной и той же сделке
+                        </div>
+                    </div>
+
                     <div class="b24-actions">
                         <button type="submit" class="b24-btn" id="save-btn" disabled>Сохранить</button>
                         <span id="save-status" class="b24-save-status">Сохранено</span>

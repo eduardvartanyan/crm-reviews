@@ -100,7 +100,8 @@ class ClientRepository
      *      code: string,
      *      title: string,
      *      web_hook: string,
-     *      notify: 'Y'|'N'
+     *      notify: 'Y'|'N',
+     *      no_repeat: 'Y'|'N',
      *  } $values
      * @return bool
      */
@@ -121,15 +122,16 @@ class ClientRepository
 
             $stmt = $this->pdo->prepare("
                 UPDATE clients
-                SET code = :code, title = :title, web_hook = :web_hook, notify = :notify
+                SET code = :code, title = :title, web_hook = :web_hook, notify = :notify, no_repeat = :no_repeat
                 WHERE domain = :domain
             ");
             $stmt->execute([
-                ':code'     => $values['code'] ?? $client['code'],
-                ':title'    => $values['title'] ?? $client['title'],
-                ':web_hook' => $values['web_hook'] ?? $client['web_hook'],
-                ':notify'   => $values['notify'] ?? $client['notify'],
-                ':domain'   => $domain,
+                ':code'      => $values['code'] ?? $client['code'],
+                ':title'     => $values['title'] ?? $client['title'],
+                ':web_hook'  => $values['web_hook'] ?? $client['web_hook'],
+                ':notify'    => $values['notify'] ?? $client['notify'],
+                ':no_repeat' => $values['no_repeat'] ?? $client['no_repeat'],
+                ':domain'    => $domain,
             ]);
 
             return true;

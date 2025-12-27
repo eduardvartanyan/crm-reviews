@@ -42,4 +42,26 @@ class ReviewRepository
             );
         }
     }
+
+    public function hasReview(int $contactId, int $dealId): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT *
+                FROM reviews
+                WHERE contact_id = :contact_id
+                  AND deal_id = :deal_id;
+            ");
+            $stmt->execute([
+                ':contact_id' => $contactId,
+                ':deal_id'    => $dealId,
+            ]);
+
+            return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new RuntimeException(
+                '[ReviewRepository->list] Error selecting from reviews -> ' . $e->getMessage()
+            );
+        }
+    }
 }
