@@ -314,6 +314,30 @@ class Migrator
      * @throws TransportException
      * @throws BaseException
      */
+    public function migrateLeads(array $filter, $page, $part): void
+    {
+        echo '<pre>';
+        $count = $this->b24From->getCRMScope()->lead()->countByFilter($filter);
+        echo 'Всего лидов: ' . $count . PHP_EOL;
+
+        $leads = $this->b24From->getCRMScope()->lead()->list(
+            [],
+            $filter,
+            ['ID'],
+            ($page - 1) * 50
+        )->getLeads();
+
+        for ($i = ($part - 1) * 25; $i < $part * 25; $i++) {
+            if (!$leads[$i]->ID) die;
+
+            $this->migrateLead($leads[$i]->ID);
+        }
+    }
+
+    /**
+     * @throws TransportException
+     * @throws BaseException
+     */
     private function getDealsCount(): int
     {
         return $this->b24From->getCRMScope()->deal()->countByFilter($this->dealsFilter);
@@ -940,7 +964,12 @@ try {
             'CATEGORY_ID' => [1, 5],
         ]
     );
-    $migrator->migrateDeals($page, $part);
+//    $migrator->migrateDeals($page, $part);
+//    $migrator->migrateLeads(
+//        ['STATUS_ID' => ['NEW', 'UC_I1FS88', 'UC_PZYPHR', '1', '3']],
+//        $page,
+//        $part
+//    );
 } catch (Throwable $e) {
     echo PHP_EOL . print_r([
         'file'    => $e->getFile(),
