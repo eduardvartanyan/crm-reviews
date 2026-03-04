@@ -7,7 +7,7 @@ use App\Controllers\SettingsController;
 use App\Support\Container;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../public/bootstrap.php';
+require_once __DIR__ . '/../public/bootstrap.core.php';
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -35,6 +35,7 @@ try {
 
         case '/activities/getreviewlinks':
             if ($method === 'POST') {
+                require_once __DIR__ . '/../public/bootstrap.b24.php';
                 $linkController = $container->get(LinkController::class);
                 $linkController->sendReviewLinks();
             }

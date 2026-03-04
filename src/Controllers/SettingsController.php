@@ -13,6 +13,18 @@ class SettingsController
     public function showForm(): void
     {
         http_response_code(200);
+
+        $domain = $_REQUEST['DOMAIN'] ?? ($_REQUEST['domain'] ?? null);
+        $domainSafe = $domain ? htmlspecialchars((string)$domain) : '';
+
+        $client = null;
+        if ($domain) {
+            $client = $this->clientRepository->getByDomain((string)$domain);
+        }
+
+        $clientData = $client;
+        $domainView = $domainSafe;
+
         require __DIR__ . '/../../views/settings.php';
     }
 
@@ -20,11 +32,12 @@ class SettingsController
     {
         header('Content-Type: application/json; charset=utf-8');
 
-        $domain  = $_REQUEST['domain'] ?? null;
-        $code    = mb_strtolower(trim($_REQUEST['code'])) ?? '';
-        $title   = trim($_REQUEST['title']) ?? '';
-        $webhook = trim($_REQUEST['webhook']) ?? '';
-        $notify = (!empty($_REQUEST['notify']) && $_REQUEST['notify'] === 'Y') ? 'Y' : 'N';
+        $domain  = $_REQUEST['DOMAIN'] ?? ($_REQUEST['domain'] ?? null);
+
+        $code    = mb_strtolower(trim((string)($_REQUEST['code'] ?? '')));
+        $title   = trim((string)($_REQUEST['title'] ?? ''));
+
+        $notify  = (!empty($_REQUEST['notify']) && $_REQUEST['notify'] === 'Y') ? 'Y' : 'N';
         $noRepeat = (!empty($_REQUEST['no_repeat']) && $_REQUEST['no_repeat'] === 'Y') ? 'Y' : 'N';
 
         if (!$domain) {
@@ -46,22 +59,15 @@ class SettingsController
         }
 
         $client = $this->clientRepository->getByCode($code);
-        if (isset($client) && $client['domain'] !== $domain) {
+        if ($client && $client['domain'] !== $domain) {
             http_response_code(400);
             echo json_encode(['error' => "Код $code занят, укажите другой"]);
-            return;
-        }
-
-        if ($webhook === '') {
-            http_response_code(400);
-            echo json_encode(['error' => 'Заполните ссылку на вебхук']);
             return;
         }
 
         $this->clientRepository->updateByDomain($domain, [
             'code'      => $code,
             'title'     => $title,
-            'web_hook'  => $webhook,
             'notify'    => $notify,
             'no_repeat' => $noRepeat,
         ]);

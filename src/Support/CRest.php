@@ -5,7 +5,6 @@ use App\Exception;
 use const App\C_REST_BLOCK_LOG;
 use const App\C_REST_IGNORE_SSL;
 use const App\C_REST_LOG_TYPE_DUMP;
-use const App\C_REST_WEB_HOOK_URL;
 
 /**
  *  @version 1.36
@@ -27,6 +26,26 @@ class CRest
     const VERSION = '1.36';
     const BATCH_COUNT    = 50;//count batch 1 query
     const TYPE_TRANSPORT = 'json';// json or xml
+
+    private static ?string $domain = null;
+    private static ?string $memberId = null;
+    /** @var null|callable(string|null $domain, string|null $memberId): array */
+    private static $settingsGetter = null;
+
+    /** @var null|callable(array $settings, string|null $domain, string|null $memberId): bool */
+    private static $settingsSetter = null;
+
+    public static function setPortalContext(?string $domain, ?string $memberId = null): void
+    {
+        self::$domain = $domain ? trim($domain) : null;
+        self::$memberId = $memberId ? trim($memberId) : null;
+    }
+
+    public static function setSettingsStorage(?callable $getter, ?callable $setter): void
+    {
+        self::$settingsGetter = $getter;
+        self::$settingsSetter = $setter;
+    }
 
     /**
      * call where install application even url
@@ -377,28 +396,19 @@ class CRest
 
     private static function getAppSettings()
     {
-        if(defined("C_REST_WEB_HOOK_URL") && !empty(C_REST_WEB_HOOK_URL))
-        {
-            $arData = [
-                'client_endpoint' => C_REST_WEB_HOOK_URL,
-                'is_web_hook'     => 'Y'
-            ];
+        $arData = static::getSettingData();
+        $isCurrData = false;
+
+        if(
+            !empty($arData['access_token']) &&
+            !empty($arData['domain']) &&
+            !empty($arData['refresh_token']) &&
+            !empty($arData['application_token']) &&
+            !empty($arData['client_endpoint']) &&
+            !empty($arData['C_REST_CLIENT_ID']) &&
+            !empty($arData['C_REST_CLIENT_SECRET'])
+        ) {
             $isCurrData = true;
-        }
-        else
-        {
-            $arData = static::getSettingData();
-            $isCurrData = false;
-            if(
-                !empty($arData[ 'access_token' ]) &&
-                !empty($arData[ 'domain' ]) &&
-                !empty($arData[ 'refresh_token' ]) &&
-                !empty($arData[ 'application_token' ]) &&
-                !empty($arData[ 'client_endpoint' ])
-            )
-            {
-                $isCurrData = true;
-            }
         }
 
         return ($isCurrData) ? $arData : false;
@@ -412,16 +422,29 @@ class CRest
 
     protected static function getSettingData()
     {
+        // 1) Если задан внешний storage — используем его
+        if (is_callable(self::$settingsGetter)) {
+            $data = (self::$settingsGetter)(self::$domain, self::$memberId);
+            if (is_array($data)) {
+                // гарантируем наличие client_id/secret из env
+                if (!empty($_ENV['C_REST_CLIENT_ID'])) {
+                    $data['C_REST_CLIENT_ID'] = $_ENV['C_REST_CLIENT_ID'];
+                }
+                if (!empty($_ENV['C_REST_CLIENT_SECRET'])) {
+                    $data['C_REST_CLIENT_SECRET'] = $_ENV['C_REST_CLIENT_SECRET'];
+                }
+                return $data;
+            }
+        }
+
+        // 2) Фолбэк (на время разработки): старый settings.json
         $return = [];
-        if(file_exists(__DIR__ . '/settings.json'))
-        {
+        if (file_exists(__DIR__ . '/settings.json')) {
             $return = static::expandData(file_get_contents(__DIR__ . '/settings.json'));
-            if(isset($_ENV['C_REST_CLIENT_ID']) && !empty($_ENV['C_REST_CLIENT_ID']))
-            {
+            if (!empty($_ENV['C_REST_CLIENT_ID'])) {
                 $return['C_REST_CLIENT_ID'] = $_ENV['C_REST_CLIENT_ID'];
             }
-            if(isset($_ENV['C_REST_CLIENT_SECRET']) && !empty($_ENV['C_REST_CLIENT_SECRET']))
-            {
+            if (!empty($_ENV['C_REST_CLIENT_SECRET'])) {
                 $return['C_REST_CLIENT_SECRET'] = $_ENV['C_REST_CLIENT_SECRET'];
             }
         }
@@ -514,7 +537,12 @@ class CRest
 
     protected static function setSettingData($arSettings)
     {
-        return  (boolean)file_put_contents(__DIR__ . '/settings.json', static::wrapData($arSettings));
+        if (is_callable(self::$settingsSetter)) {
+            return (bool)(self::$settingsSetter)($arSettings, self::$domain, self::$memberId);
+        }
+
+        // Фолбэк в файл (на время)
+        return (bool)file_put_contents(__DIR__ . '/settings.json', static::wrapData($arSettings));
     }
 
     /**
@@ -609,5 +637,10 @@ class CRest
         }
 
         return $return;
+    }
+
+    public static function getSettingsForDebug(): array
+    {
+        return static::getSettingData();
     }
 }

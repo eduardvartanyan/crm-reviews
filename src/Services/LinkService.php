@@ -5,7 +5,7 @@ namespace App\Services;
 
 use App\Repositories\ClientRepository;
 use App\Support\Logger;
-use Exception;
+use App\Support\CRest;
 
 readonly class LinkService
 {
@@ -22,8 +22,12 @@ readonly class LinkService
         if (empty($contactIds)) return [];
 
         $client = $this->clientRepository->getByDomain($domain);
+        if (!$client) {
+            Logger::error('[LinkService] Client not found by domain', ['domain' => $domain, 'deal_id' => $dealId]);
+            return [];
+        }
 
-        $link = $this->formUrl . $client['code'] . '/';
+        $link = rtrim($this->formUrl, '/') . '/' . $client['code'] . '/';
 
         $links = [];
         foreach ($contactIds as $contactId) {
@@ -36,21 +40,36 @@ readonly class LinkService
 
     public function sendReviewLinks(int $dealId): void
     {
-        $reviewLinks = $this->generateReviewLinks($dealId, $_REQUEST['auth']['domain']);
+        $auth = $_REQUEST['auth'] ?? null;
 
-        $url = $_REQUEST['auth']['client_endpoint'] . 'bizproc.event.send.json?' . http_build_query([
-                'auth' => $_REQUEST['auth']['access_token'],
-                'event_token' => $_REQUEST['event_token'],
-                'return_values' => [
-                    'links' => $reviewLinks,
-                ]
-            ]);
-        $result = file_get_contents($url);
+        $domain = $_REQUEST['DOMAIN']
+            ?? (is_array($auth) ? ($auth['domain'] ?? null) : null);
+
+        if (empty($domain)) {
+            Logger::error('[LinkService] DOMAIN not found in request', ['request' => $_REQUEST]);
+            http_response_code(401);
+            return;
+        }
+
+        if (empty($_REQUEST['event_token'])) {
+            Logger::error('[LinkService] event_token not found in request', ['request' => $_REQUEST]);
+            http_response_code(400);
+            return;
+        }
+
+        $reviewLinks = $this->generateReviewLinks($dealId, (string)$domain);
+
+        $result = CRest::call('bizproc.event.send', [
+            'event_token' => (string)$_REQUEST['event_token'],
+            'return_values' => [
+                'links' => $reviewLinks,
+            ],
+        ]);
 
         Logger::info('Responded review links', [
-            'request'  => $_REQUEST,
-            'response' => $url,
-            'result'   => $result,
+            'domain'  => $domain,
+            'deal_id' => $dealId,
+            'result'  => $result,
         ]);
     }
 

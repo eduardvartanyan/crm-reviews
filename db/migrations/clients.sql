@@ -7,8 +7,14 @@ CREATE TABLE IF NOT EXISTS clients (
     active VARCHAR(1) NOT NULL DEFAULT 'Y',
     created_at TIMESTAMP DEFAULT NOW(),
     web_hook VARCHAR(255) NOT NULL DEFAULT '-',
-    notify VARCAR(1) NOT NULL DEFAULT 'Y',
+    notify VARCHAR(1) NOT NULL DEFAULT 'Y',
     no_repeat VARCHAR(1) NOT NULL DEFAULT 'Y',
+    member_id VARCHAR(255),
+    access_token TEXT,
+    refresh_token TEXT,
+    token_expires_at TIMESTAMP,
+    client_endpoint VARCHAR(255),
+    application_token VARCHAR(255),
 
     CONSTRAINT clients_code_unique UNIQUE (code)
 );

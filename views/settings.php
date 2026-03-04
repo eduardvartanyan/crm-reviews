@@ -1,11 +1,8 @@
 <?php
 declare(strict_types=1);
 
-use App\Repositories\ClientRepository;
-
-$clientRepository = new ClientRepository();
-$domain = htmlspecialchars($_REQUEST['DOMAIN']);
-$client = $clientRepository->getByDomain($domain);
+$domain = $domainView ?? '';
+$client = $clientData ?? null;
 ?>
 
 <style>
@@ -322,33 +319,6 @@ $client = $clientRepository->getByDomain($domain);
                     <input type="hidden" name="domain" value="<?= $domain ?>" />
 
                     <div class="b24-form-group">
-                        <label for="webhook" class="b24-form-label b24-required">
-                            Ссылка на вебхук:
-                        </label>
-                        <input
-                                id="webhook"
-                                class="b24-input"
-                                type="text"
-                                name="webhook"
-                                placeholder="Скопируйте в поле ссылку на входящий вебхук"
-                                value="<?= htmlspecialchars($client['web_hook'] ?? '') ?>"
-                                required
-                        />
-                        <div class="b24-form-hint">
-                            Создайте входящий вебхук в разделе
-                            <span class="b24-path">
-                            Разработчикам
-                            <span class="b24-path-sep">›</span>
-                            <a href="https://<?= $domain ?>/devops/section/standard/" target="_blank">
-                                Другое
-                            </a>
-                        </span>.
-                            Установите права <span class="b24-chip">CRM (crm)</span>, <span class="b24-chip">Чат и уведомления (im)</span>.
-                            Скопируйте значение поля <span class="b24-field-name">Вебхук для вызова REST API</span>
-                        </div>
-                    </div>
-
-                    <div class="b24-form-group">
                         <label for="title" class="b24-form-label b24-required">
                             Название компании в форме:
                         </label>
@@ -392,7 +362,7 @@ $client = $clientRepository->getByDomain($domain);
                                 type="checkbox"
                                 name="notify"
                                 value="Y"
-                                <?= $client['notify'] === 'Y' ? 'checked' : '' ?>
+                                <?= (($client['notify'] ?? 'Y') === 'Y') ? 'checked' : '' ?>
                             />
                             <span class="b24-checkbox-box"></span>
                             <span class="b24-checkbox-label">
@@ -411,7 +381,7 @@ $client = $clientRepository->getByDomain($domain);
                                     type="checkbox"
                                     name="no_repeat"
                                     value="Y"
-                                <?= $client['no_repeat'] === 'Y' ? 'checked' : '' ?>
+                                <?= (($client['no_repeat'] ?? 'Y') === 'Y') ? 'checked' : '' ?>
                             />
                             <span class="b24-checkbox-box"></span>
                             <span class="b24-checkbox-label">
