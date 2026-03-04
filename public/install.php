@@ -7,7 +7,7 @@ use App\Support\CRest;
 use App\Support\Logger;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../public/bootstrap.php';
+require_once __DIR__ . '/../public/bootstrap.core.php';
 
 $result = CRest::installApp();
 
