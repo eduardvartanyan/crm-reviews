@@ -35,7 +35,7 @@ class ReviewRepository
                 ':comment'    => $values['comment'],
             ]);
 
-            return (int) $this->pdo->lastInsertId();
+            return (int)$this->pdo->lastInsertId();
         } catch (PDOException $e) {
             throw new RuntimeException(
                 '[ReviewRepository->create] Error inserting into reviews -> ' . $e->getMessage()
@@ -47,20 +47,21 @@ class ReviewRepository
     {
         try {
             $stmt = $this->pdo->prepare("
-                SELECT *
+                SELECT 1
                 FROM reviews
                 WHERE contact_id = :contact_id
-                  AND deal_id = :deal_id;
+                  AND deal_id = :deal_id
+                LIMIT 1;
             ");
             $stmt->execute([
                 ':contact_id' => $contactId,
                 ':deal_id'    => $dealId,
             ]);
 
-            return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+            return (bool)$stmt->fetchColumn();
         } catch (PDOException $e) {
             throw new RuntimeException(
-                '[ReviewRepository->list] Error selecting from reviews -> ' . $e->getMessage()
+                '[ReviewRepository->hasReview] Error selecting from reviews -> ' . $e->getMessage()
             );
         }
     }

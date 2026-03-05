@@ -6,17 +6,6 @@ use PDO;
 
 final class System
 {
-    public static function getWebhook(): ?string
-    {
-        $identifier = self::resolveClientIdentifier();
-        if (!$identifier) {
-            return null;
-        }
-
-        $client = self::findClient($identifier);
-        return $client['web_hook'] ?? null;
-    }
-
     public static function resolveClientIdentifier(): ?array
     {
         if (!empty($_REQUEST['auth']['domain'])) {

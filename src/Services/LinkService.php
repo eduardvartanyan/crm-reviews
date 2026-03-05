@@ -10,14 +10,23 @@ use App\Support\CRest;
 readonly class LinkService
 {
     public function __construct(
-        private B24Service       $b24Service,
         private ClientRepository $clientRepository,
-        private string           $formUrl
-    ) { }
+        private string $formUrl,
+        private ?B24Service $b24Service = null
+    ) {}
 
     public function generateReviewLinks(int $dealId, string $domain): array
     {
+        if ($this->b24Service === null) {
+            throw new \RuntimeException('B24Service is not initialized');
+        }
         $contactIds = $this->b24Service->getDealContactIds($dealId);
+
+        Logger::info('[BP] generateReviewLinks', [
+            'deal_id' => $dealId,
+            'domain' => $domain,
+            'contacts_cnt' => count($contactIds),
+        ]);
 
         if (empty($contactIds)) return [];
 
@@ -66,11 +75,20 @@ readonly class LinkService
             ],
         ]);
 
-        Logger::info('Responded review links', [
-            'domain'  => $domain,
-            'deal_id' => $dealId,
-            'result'  => $result,
-        ]);
+        if (!empty($result['error'])) {
+            Logger::error('[BP] bizproc.event.send error', [
+                'error' => $result['error'],
+                'info' => $result['error_information'] ?? null,
+                'domain' => $domain,
+                'deal_id' => $dealId,
+            ]);
+        } else {
+            Logger::info('[BP] bizproc.event.send ok', [
+                'domain' => $domain,
+                'deal_id' => $dealId,
+                'links_cnt' => count($reviewLinks),
+            ]);
+        }
     }
 
     private function encodeParams(int $dealId, int $contactId): string

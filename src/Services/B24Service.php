@@ -11,25 +11,65 @@ readonly class B24Service
 {
     public function __construct(private ServiceBuilder $b24) { }
 
-    public function getDealContactIds(int $id): ?array
+    public function getDealContactIds(int $dealId): array
     {
+        $ids = [];
+
+        // 1) Привязки контактов (если есть)
         try {
-            $result = $this->b24->getCRMScope()->dealContact()->itemsGet($id);
-            $contactIds = [];
+            $result = $this->b24->getCRMScope()->dealContact()->itemsGet($dealId);
             foreach ($result->getDealContacts() as $item) {
-                $contactIds[] = $item->CONTACT_ID;
+                $cid = (int)($item->CONTACT_ID ?? 0);
+                if ($cid > 0) $ids[] = $cid;
             }
-            return $contactIds;
         } catch (Throwable $e) {
-            Logger::error('Ошибка при получении ID контакта', [
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine(),
+            Logger::error('Ошибка при получении привязанных контактов сделки', [
+                'deal_id' => $dealId,
                 'message' => $e->getMessage(),
-                'data'    => $id
             ]);
         }
 
-        return null;
+        // 2) Fallback: основной контакт CONTACT_ID в самой сделке
+        // (на некоторых порталах/сценариях только он и заполнен)
+        if (empty($ids)) {
+            try {
+                // В SDK v1.9 у CRM deal обычно есть метод get()
+                $deal = $this->b24->getCRMScope()->deal()->get($dealId);
+
+                // В разных версиях SDK поле может лежать по-разному
+                $contactId = 0;
+
+                if (method_exists($deal, 'getContactId')) {
+                    $contactId = (int)$deal->getContactId();
+                } elseif (property_exists($deal, 'CONTACT_ID')) {
+                    $contactId = (int)$deal->CONTACT_ID;
+                } elseif (method_exists($deal, 'getDeal')) {
+                    $d = $deal->getDeal();
+                    if (is_object($d) && property_exists($d, 'CONTACT_ID')) {
+                        $contactId = (int)$d->CONTACT_ID;
+                    }
+                }
+
+                if ($contactId > 0) $ids[] = $contactId;
+
+            } catch (Throwable $e) {
+                Logger::error('Ошибка при получении CONTACT_ID сделки', [
+                    'deal_id' => $dealId,
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Уникализируем и возвращаем
+        $ids = array_values(array_unique(array_filter($ids, fn($v) => (int)$v > 0)));
+
+        Logger::info('[BP] resolved deal contact ids', [
+            'deal_id' => $dealId,
+            'count' => count($ids),
+            'ids' => $ids,
+        ]);
+
+        return $ids;
     }
 
     /**

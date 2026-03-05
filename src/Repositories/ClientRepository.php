@@ -121,7 +121,6 @@ class ClientRepository
      * @param array{
      *      code: string,
      *      title: string,
-     *      web_hook: string,
      *      notify: 'Y'|'N',
      *      no_repeat: 'Y'|'N',
      *  } $values
