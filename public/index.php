@@ -63,6 +63,7 @@ try {
 
         case '/review/submit':
             if ($method === 'POST') {
+                require_once __DIR__ . '/../public/bootstrap.portal.php';
                 $controller = $container->get(ReviewController::class);
                 $controller->submit();
             }
